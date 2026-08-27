@@ -411,7 +411,8 @@ button.stamp:disabled{opacity:.4;cursor:not-allowed}
 .sheet.brief2 .bl2{font-family:Anton,sans-serif;font-size:clamp(28px,5.6vw,42px);text-transform:uppercase;
   line-height:.95;color:#B23A00;margin-bottom:5px}
 .sheet.brief2 .bb2{font-size:14px;line-height:1.5;color:var(--ink)}
-.sheet.brief2 .sw2{display:flex;gap:5px;flex-wrap:wrap;margin-top:12px}
+.sheet.brief2 .sw2{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.sheet.brief2 .swhint{font-size:12px;line-height:1.5;color:#1A1E24;margin-bottom:2px}
 .sheet.brief2 .sw2 button{font-family:"Space Mono",monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
   padding:6px 9px;background:rgba(13,16,21,.06);border:1.5px solid rgba(13,16,21,.55);color:#0D1015;cursor:pointer;font-weight:700}
 .sheet.brief2 .sw2 button:hover{border-color:#B23A00;background:#B23A00;color:#FFFFFF}
@@ -986,6 +987,8 @@ function drawBrief(){
   var L=LANES.filter(function(l){return l.id===ME.lane;})[0];if(!L)return;
   $("brief").innerHTML='<div class="sl">your lane</div><div class="bl2">'+esc(L.label)+'</div>'+
     '<div class="bb2">'+esc(L.brief)+'</div>'+
+    '<div class="sl" style="margin-top:16px">switch to a different lane</div>'+
+    '<div class="swhint">Tap one and it becomes yours instead. The crew sees the change straight away.</div>'+
     '<div class="sw2">'+LANES.filter(function(l){return l.id!==ME.lane;}).map(function(l){
       return '<button data-l="'+l.id+'">'+esc(l.label)+'</button>';}).join("")+'</div>';
 }
