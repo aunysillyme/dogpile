@@ -522,6 +522,12 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
 .cpick{display:flex;gap:5px}
 .cpick button{width:22px;height:22px;border:1px solid var(--faint);cursor:pointer;padding:0}
 .cpick button.on{border-color:var(--chalk);box-shadow:0 0 0 2px rgba(237,230,216,.25)}
+.sweepdoor{border-style:dashed;border-color:#C24A00}
+.sweepdoor .dt{color:#C24A00}
+.sweepdoor:hover{background:var(--paper);border-color:var(--paper);border-style:solid;
+  box-shadow:4px 5px 0 rgba(194,74,0,.55);transform:translateY(-2px)}
+.sweepdoor:hover .dt{color:#8A3708}
+.sweepdoor:disabled{opacity:.55;cursor:wait}
 .sweepbtn{width:100%;margin-top:11px;font-family:Anton,sans-serif;font-size:19px;text-transform:uppercase;
   letter-spacing:.04em;padding:12px 14px;cursor:pointer;background:transparent;color:var(--violet);
   border:1px solid var(--violet);}
@@ -630,6 +636,10 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
     <button class="door pr" data-door="pull"><div class="dt">&lt;/&gt; open a pull request</div>
       <div class="dd">Pull the live source of the site, edit it here, and submit the diff. The reviewer reads every patch automatically.</div></button>
   </div>
+  <div class="doors" style="grid-template-columns:1fr">
+    <button class="door pr sweepdoor" id="sweep"><div class="dt">&#9889; red team with AI</div>
+      <div class="dd" id="sweepNote">Fetches the live page and runs the standard pass: security headers, clickjacking, mixed content, tab-nabbing, viewport, alt text, password-over-GET. Real findings, pinned straight to the board.</div></button>
+  </div>
 
   <div class="deck">
     <div class="col">
@@ -659,8 +669,6 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
       <div class="botcard">
         <div class="bh">the reviewer</div>
         <p>An AI that <b>reads code</b>. Submit a PATCH and it reviews the diff automatically. Say <b>@bot</b> in chat, or hit <b>ask reviewer</b> on any finding.</p>
-        <button class="sweepbtn" id="sweep">red team with AI &#9889;</button>
-        <div class="sweepnote" id="sweepNote">Fetches the live page and runs the standard pass: security headers, clickjacking, mixed content, tab-nabbing, viewport, alt text, password-over-GET. Real findings, pinned straight to the board.</div>
       </div>
 
       <div class="sheet hot t2">
@@ -1153,16 +1161,16 @@ function addPlan(){
 setTimeout(function(){
   var sw=$("sweep");if(!sw)return;
   sw.addEventListener("click",function(){
-    if(DEMO){$("sweepNote").textContent="demo board - the sweep only runs on a real room";return;}
-    if(!LAST.target){$("sweepNote").textContent="no target set on this room";return;}
-    sw.disabled=true;sw.textContent="sweeping...";
+    if(DEMO){$("sweepNote").textContent="Demo board - the sweep only runs on a real room.";return;}
+    if(!LAST.target){$("sweepNote").textContent="No target set on this room.";return;}
+    sw.disabled=true;
     $("sweepNote").textContent="Fetching the page and running the checks. A few seconds.";
     post("sweep",{id:ME.id}).then(function(r){
-      sw.disabled=false;sw.textContent="red team with AI \u26A1";
+      sw.disabled=false;
       if(r.error){$("sweepNote").textContent=r.error;return;}
-      $("sweepNote").textContent=r.added+" pinned, "+r.dupes+" already found, "+r.total+" checked.";
+      $("sweepNote").textContent=r.added+" pinned to the board, "+r.dupes+" the crew already had, "+r.total+" checks run. Run it again any time.";
       pull();
-    }).catch(function(){sw.disabled=false;sw.textContent="red team with AI \u26A1";});
+    }).catch(function(){sw.disabled=false;$("sweepNote").textContent="Could not reach the room.";});
   });
 },0);
 $("padd").addEventListener("click",addPlan);
