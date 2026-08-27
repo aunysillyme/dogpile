@@ -397,6 +397,8 @@ button.stamp:disabled{opacity:.4;cursor:not-allowed}
   background:rgba(13,16,21,.05);border:1px dashed rgba(13,16,21,.3);padding:9px 10px}
 .sheet textarea.p:focus,.sheet input.p:focus{border-bottom-color:#B23A00;border-bottom-style:solid}
 .sheet textarea.p::placeholder,.sheet input.p::placeholder{color:rgba(13,16,21,.5)}
+.sheet .cnt{font-family:"Space Mono",monospace;font-size:11px;color:#3A4048;margin-top:5px}
+.sheet .cnt.ok{color:#1B6B2E}
 .sheet .hint2{font-size:12px;color:#1A1E24;line-height:1.5;margin-top:6px}
 .sheet .hint2 b{color:var(--ink);font-weight:700}
 .sheet .er2{color:#B23A00;font-size:12.5px;min-height:17px;margin-top:7px;font-family:"Space Mono",monospace}
@@ -696,7 +698,8 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
         <div class="kindpick paper" id="kindPick"></div>
         <div class="hint2" id="kindHint"></div>
         <div class="sl">what happened</div>
-        <textarea class="p" id="fText" maxlength="300" placeholder="in plain words"></textarea>
+        <textarea class="p" id="fText" maxlength="300" placeholder="in plain words - a short sentence is perfect"></textarea>
+        <div class="cnt" id="fCount">Needs a few words so we can spot duplicates.</div>
         <div id="extra"></div>
         <div class="sl">how bad</div>
         <div class="sevpick paper" id="sevPick"></div>
@@ -908,17 +911,34 @@ function clearForm(){
   $("gate").innerHTML="";
 }
 $("fileIt").addEventListener("click",function(){send(false);});
+document.addEventListener("input",function(e){
+  if(!e.target||e.target.id!=="fText")return;
+  var c=$("fCount");if(!c)return;
+  var v=e.target.value.trim();
+  if(v.length>=6){c.textContent="Ready to pin.";c.className="cnt ok";}
+  else{c.textContent=v.length?("A few more words - "+(6-v.length)+" to go."):"Needs a few words so we can spot duplicates.";c.className="cnt";}
+});
 function send(force){
   var f=readForm();
-  if(f.text.length<6){$("e1").textContent="say what actually happened";return;}
-  $("e1").textContent="";$("fileIt").disabled=true;
+  if(!f.text){$("e1").textContent="Write what you found first.";$("fText").focus();return;}
+  if(f.text.length<6){
+    $("e1").textContent="A few more words - \""+f.text+"\" is too short for us to tell it apart from someone else's finding.";
+    $("fText").focus();return;
+  }
+  $("e1").textContent="";$("fileIt").disabled=true;$("fileIt").textContent="pinning...";
   var body=Object.assign({id:ME.id},f);if(force)body.force=1;
   post("file",body).then(function(r){
-    $("fileIt").disabled=false;
+    $("fileIt").disabled=false;$("fileIt").textContent="pin it to the board";
     if(r.error){$("e1").textContent=r.error;return;}
     if(r.dupe){showGate(r.dupe);return;}
+    var id=r.find?("#"+r.find.id):"";
     clearForm();pull();
-  }).catch(function(){$("fileIt").disabled=false;$("e1").textContent="could not reach the room";});
+    flash("Pinned "+id+" to the board. Everyone can see it.");
+    var bd=$("board");if(bd)bd.scrollIntoView({block:"nearest",behavior:"smooth"});
+  }).catch(function(){
+    $("fileIt").disabled=false;$("fileIt").textContent="pin it to the board";
+    $("e1").textContent="Could not reach the room.";
+  });
 }
 function showGate(d){
   $("gate").innerHTML='<div class="gate" style="border-color:#B23A00;background:rgba(178,58,0,.07)"><h6 style="color:#B23A00">somebody already said that</h6>'+
