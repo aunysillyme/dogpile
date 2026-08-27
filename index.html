@@ -2,7 +2,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Group red-teaming that stops the pile-on. Everyone gets a different lane, nobody files the same bug twice, and the board shows what nobody has touched.">
-<meta name="theme-color" content="#17140F">
+<meta name="theme-color" content="#2E2F2C">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Dogpile">
 <meta property="og:title" content="Dogpile &middot; red-team a site without all finding the same bug">
@@ -25,8 +25,8 @@
    Schitzo's law: cold is the ground, the warm colour is the intrusion.
    ORANGE IS URGENCY, NEVER A CATEGORY. Kinds are told apart by silhouette. */
 :root{
-  --void:#17140F; --board:#201C15;
-  --chalk:#EDE6D8; --dust:#8A8578; --faint:#463E33;
+  --void:#2E2F2C; --board:#373834;
+  --chalk:#EDE6D8; --dust:#A8A69B; --faint:#5C5D57;
   --orange:#FF6B1A; --ember:#FFA45C;
   --violet:#8B5CF6; --vdim:#5B3FA8;
   --steel:#6E8598;
@@ -1306,7 +1306,7 @@ function tickF(t){
     p.dx*=.9;p.dy*=.9;
     var x=bx+p.dx,y=by+p.dy,pulse=.55+.45*Math.sin(t/1000*p.sp+p.ph);
     ctx.beginPath();ctx.arc(x,y,p.r+near*.9,0,6.283);
-    ctx.fillStyle="rgba(237,230,216,"+Math.min(.6,(.05+.14*pulse)+near*.35).toFixed(3)+")";ctx.fill();
+    ctx.fillStyle="rgba(237,230,216,"+Math.min(.5,(.06+.15*pulse)+near*.3).toFixed(3)+")";ctx.fill();
     if(p.tw<.22){
       var s=p.r*3,o=Math.min(.6,(.10+.16*pulse)+near*.3);
       ctx.strokeStyle="rgba(255,107,26,"+o.toFixed(3)+")";ctx.lineWidth=.7;
