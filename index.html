@@ -301,6 +301,189 @@ button.stamp:disabled{opacity:.4;cursor:not-allowed}
 
 .cork .foot{margin-top:20px;display:flex;gap:9px;flex-wrap:wrap;align-items:center}
 .cork .fnote{font-size:11.5px;color:var(--faint);line-height:1.6}
+
+/* ---- WAYFINDING: an empty board has to teach you the next move ---- */
+.opensite{display:inline-flex;align-items:center;gap:9px;font-family:Anton,sans-serif;
+  font-size:clamp(17px,3.2vw,23px);text-transform:uppercase;letter-spacing:.04em;text-decoration:none;
+  padding:11px 17px;color:var(--void);background:var(--violet);border:1px solid var(--violet);
+  box-shadow:4px 4px 0 rgba(13,16,21,.7)}
+.opensite:hover{background:var(--orange);border-color:var(--orange);box-shadow:4px 4px 0 rgba(255,107,26,.35)}
+.opensite .u{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.06em;text-transform:none;opacity:.75}
+.tline{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.tline .nt{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:15px;margin:4px 0 10px}
+.step{position:relative;background:var(--paper);color:var(--ink);padding:15px 15px 14px;
+  box-shadow:3px 4px 0 rgba(0,0,0,.55)}
+.step:nth-child(1){transform:rotate(-.9deg)}
+.step:nth-child(2){transform:rotate(.6deg)}
+.step:nth-child(3){transform:rotate(-.4deg)}
+.step::after{content:"";position:absolute;top:-6px;left:22px;width:11px;height:11px;border-radius:50%;
+  background:var(--orange);border:1px solid #8A3708;box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.5)}
+.step .num{font-family:Anton,sans-serif;font-size:36px;line-height:.8;color:#B23A00;margin-bottom:6px}
+.step .sh{font-family:Anton,sans-serif;font-size:19px;text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px;line-height:1.05}
+.step p{margin:0;font-size:13px;line-height:1.55;color:var(--inkdim)}
+.step p b{color:var(--ink);font-weight:700}
+.step .hw{font-family:Kalam,cursive;font-weight:700;font-size:14.5px;color:#B23A00;display:block;margin-top:7px}
+
+.botcard{border:1px solid var(--vdim);border-left:2px solid var(--violet);padding:11px 13px;margin-bottom:14px}
+.botcard .bh{font-family:Anton,sans-serif;font-size:16px;text-transform:uppercase;letter-spacing:.05em;color:var(--violet);margin-bottom:3px}
+.botcard p{margin:0;font-size:12.5px;line-height:1.55;color:var(--dust)}
+.botcard p b{color:var(--chalk);font-weight:400}
+.hint{font-size:11.5px;color:var(--faint);line-height:1.55;margin-top:8px}
+.hint b{color:var(--dust);font-weight:400}
+
+.pin .rep.bot{border-left:2px solid var(--violet);padding-left:8px;color:#3A2F55}
+.pin .rep.bot b{color:#5B3FA8}
+.m.bot .nm{color:var(--violet)}
+.m.bot .bd{color:var(--dust);font-size:12.5px;border-left:2px solid var(--vdim);padding-left:9px}
+
+/* ---- ONE RULE ACROSS EVERY SCREEN ----
+   Anything a person writes on is PAPER. The board underneath stays dark.
+   So: the intake slip, the lane brief, the file form and the plan are paper.
+   The chalk placards, the whiteboard and the chat are the board itself. */
+.sheet{position:relative;background:var(--paper);color:var(--ink);padding:20px 20px 22px;
+  box-shadow:4px 5px 0 rgba(0,0,0,.58);margin-bottom:18px}
+.sheet::after{content:"";position:absolute;top:-7px;left:26px;width:13px;height:13px;border-radius:50%;
+  background:var(--vdim);border:1px solid #2A1F49;box-shadow:inset 1.6px 1.6px 0 rgba(255,255,255,.45)}
+.sheet.hot::after{background:var(--orange);border-color:#8A3708}
+.sheet.t1{transform:rotate(-.5deg)}
+.sheet.t2{transform:rotate(.45deg)}
+.sheet .sl{font-family:"Space Mono",monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--inkdim);margin:15px 0 3px}
+.sheet .sl:first-of-type{margin-top:0}
+.sheet .sh2{font-family:Anton,sans-serif;font-size:clamp(26px,5vw,38px);text-transform:uppercase;
+  line-height:.95;color:var(--ink);margin-bottom:4px}
+.sheet .sh2 em{font-style:normal;color:#B23A00}
+.sheet .ss2{font-family:Kalam,cursive;font-weight:700;font-size:16px;color:var(--inkdim);line-height:1.4}
+.sheet textarea.p,.sheet input.p{width:100%;font-family:"Space Mono",monospace;font-size:14px;color:var(--ink);
+  background:transparent;border:0;border-bottom:1.5px dashed rgba(13,16,21,.38);padding:7px 2px;outline:none;
+  resize:none;line-height:1.55}
+.sheet textarea.p{min-height:54px}
+.sheet textarea.p.code{font-size:12px;white-space:pre;overflow-x:auto;min-height:110px;
+  background:rgba(13,16,21,.05);border:1px dashed rgba(13,16,21,.3);padding:9px 10px}
+.sheet textarea.p:focus,.sheet input.p:focus{border-bottom-color:#B23A00;border-bottom-style:solid}
+.sheet textarea.p::placeholder,.sheet input.p::placeholder{color:rgba(13,16,21,.34)}
+.sheet .hint2{font-size:11.5px;color:var(--inkdim);line-height:1.5;margin-top:6px}
+.sheet .hint2 b{color:var(--ink);font-weight:700}
+.sheet .er2{color:#B23A00;font-size:12.5px;min-height:17px;margin-top:7px;font-family:"Space Mono",monospace}
+
+.kindpick.paper button{border:1px solid rgba(13,16,21,.3);color:var(--inkdim);background:transparent}
+.kindpick.paper button.on{border-color:#B23A00;color:#B23A00;background:rgba(178,58,0,.07)}
+.kindpick.paper button:hover{border-color:var(--ink);color:var(--ink)}
+.sevpick.paper button{border:1px solid rgba(13,16,21,.3);color:var(--inkdim)}
+.sevpick.paper button.on{border-color:#B23A00;color:#B23A00;background:rgba(178,58,0,.07)}
+
+/* the lane brief, written on paper and pinned */
+.sheet.brief2 .bl2{font-family:Anton,sans-serif;font-size:clamp(28px,5.6vw,42px);text-transform:uppercase;
+  line-height:.95;color:#B23A00;margin-bottom:5px}
+.sheet.brief2 .bb2{font-size:14px;line-height:1.5;color:var(--ink)}
+.sheet.brief2 .sw2{display:flex;gap:5px;flex-wrap:wrap;margin-top:12px}
+.sheet.brief2 .sw2 button{font-family:"Space Mono",monospace;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 7px;background:transparent;border:1px solid rgba(13,16,21,.28);color:var(--inkdim);cursor:pointer}
+.sheet.brief2 .sw2 button:hover{border-color:#B23A00;color:#B23A00}
+
+/* the plan is a paper to-do pinned to the board */
+.plan.paper{background:var(--paper);color:var(--ink);padding:16px 18px;box-shadow:4px 5px 0 rgba(0,0,0,.58);position:relative}
+.plan.paper::after{content:"";position:absolute;top:-7px;left:26px;width:13px;height:13px;border-radius:50%;
+  background:var(--orange);border:1px solid #8A3708;box-shadow:inset 1.6px 1.6px 0 rgba(255,255,255,.5)}
+.plan.paper .pi{border-bottom:1px dashed rgba(13,16,21,.24);font-size:14.5px}
+.plan.paper .bx{border-color:rgba(13,16,21,.42)}
+.plan.paper .pi.done .bx{border-color:#B23A00}
+.plan.paper .pi.done .bx::after{color:#B23A00}
+.plan.paper .pi.done .tx{color:rgba(13,16,21,.4)}
+.plan.paper .tx{color:var(--ink);font-family:Kalam,cursive;font-weight:700;font-size:17px}
+.plan.paper .who{color:var(--inkdim);font-family:"Space Mono",monospace;font-size:9px}
+.plan.paper .rm{color:rgba(13,16,21,.35)}
+.plan.paper .rm:hover{color:#B23A00}
+.plan.paper .empty{color:var(--inkdim)}
+.planbar{display:flex;border:1px dashed rgba(13,16,21,.35);margin-top:12px}
+.planbar input{flex:1;min-width:0;background:transparent;border:0;outline:none;color:var(--ink);
+  font-family:"Space Mono",monospace;font-size:13px;padding:9px 10px}
+.planbar input::placeholder{color:rgba(13,16,21,.34)}
+.planbar button{background:transparent;border:0;border-left:1px dashed rgba(13,16,21,.35);
+  font-family:Anton,sans-serif;font-size:13px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--inkdim);cursor:pointer;padding:0 14px}
+.planbar button:hover{color:#B23A00}
+
+button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18px}
+
+/* ---- three doors, so nobody has to guess what this thing does ---- */
+.doors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin:0 0 20px}
+@media(max-width:700px){.doors{grid-template-columns:1fr}}
+.door{position:relative;background:var(--paper);color:var(--ink);padding:15px 14px 14px;cursor:pointer;
+  text-align:left;font-family:inherit;border:0;box-shadow:3px 4px 0 rgba(0,0,0,.55)}
+.door:nth-child(1){transform:rotate(-.7deg)}
+.door:nth-child(2){transform:rotate(.5deg)}
+.door:nth-child(3){transform:rotate(-.35deg)}
+.door::after{content:"";position:absolute;top:-6px;left:20px;width:11px;height:11px;border-radius:50%;
+  background:var(--vdim);border:1px solid #2A1F49;box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.45)}
+.door:hover{box-shadow:4px 6px 0 rgba(255,107,26,.6)}
+.door:hover::after{background:var(--orange);border-color:#8A3708}
+.door .dt{font-family:Anton,sans-serif;font-size:19px;text-transform:uppercase;letter-spacing:.03em;
+  line-height:1.02;display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.door .dd{font-size:12px;line-height:1.5;color:var(--inkdim)}
+.door.pr{background:transparent;color:var(--chalk);border:1px dashed var(--violet);box-shadow:none;transform:none}
+.door.pr::after{display:none}
+.door.pr .dt{color:var(--violet)}
+.door.pr .dd{color:var(--dust)}
+.door.pr:hover{border-color:var(--orange);box-shadow:none}
+.door.pr:hover .dt{color:var(--orange)}
+
+/* ---- the pull request bench ---- */
+.prbench{position:relative;background:var(--paper);color:var(--ink);padding:20px;margin-bottom:18px;
+  box-shadow:4px 5px 0 rgba(0,0,0,.58)}
+.prbench::after{content:"";position:absolute;top:-7px;left:26px;width:13px;height:13px;border-radius:50%;
+  background:var(--violet);border:1px solid #2A1F49;box-shadow:inset 1.6px 1.6px 0 rgba(255,255,255,.45)}
+.prbench .ph2{font-family:Anton,sans-serif;font-size:clamp(24px,4.6vw,34px);text-transform:uppercase;line-height:.95;margin-bottom:3px}
+.prbench .ph2 em{font-style:normal;color:#5B3FA8}
+.prbench .pmeta{font-family:"Space Mono",monospace;font-size:11px;color:var(--inkdim);margin:9px 0}
+.prbench .pmeta b{color:var(--ink);font-weight:700}
+.prbench textarea{width:100%;font-family:"Space Mono",monospace;font-size:11.5px;line-height:1.5;color:var(--ink);
+  background:rgba(13,16,21,.05);border:1px dashed rgba(13,16,21,.3);padding:10px;outline:none;
+  min-height:260px;white-space:pre;overflow:auto;resize:vertical}
+.prbench textarea:focus{border-color:#B23A00;border-style:solid}
+.prrow{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.prrow .k{font-family:"Space Mono",monospace;font-size:10.5px;color:var(--inkdim)}
+.inkbtn{font-family:Anton,sans-serif;font-size:16px;text-transform:uppercase;letter-spacing:.05em;
+  padding:10px 15px;cursor:pointer;color:var(--paper);background:var(--ink);border:2px solid var(--ink);
+  box-shadow:3px 3px 0 rgba(255,107,26,.85)}
+.inkbtn:hover{background:#B23A00;border-color:#B23A00;box-shadow:3px 3px 0 rgba(13,16,21,.55)}
+.inkbtn:disabled{opacity:.4;cursor:not-allowed}
+.inkbtn.alt{color:var(--ink);background:transparent;box-shadow:3px 3px 0 rgba(91,63,168,.7)}
+.inkbtn.alt:hover{background:var(--vdim);color:var(--paper);border-color:var(--vdim)}
+
+/* ---- sticky notes ---- */
+.stickies{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:12px}
+.sticky{position:relative;padding:14px 12px 26px;font-family:Kalam,cursive;font-weight:700;font-size:16px;
+  line-height:1.35;color:#13161B;box-shadow:3px 4px 0 rgba(0,0,0,.5);word-wrap:break-word;overflow-wrap:anywhere;min-height:104px}
+.sticky.y{background:#E8D26A}.sticky.o{background:#F0A868}
+.sticky.v{background:#B9A4E8}.sticky.c{background:#8FD3CB}
+.sticky:nth-child(3n+1){transform:rotate(-1.4deg)}
+.sticky:nth-child(3n+2){transform:rotate(1deg)}
+.sticky:nth-child(3n){transform:rotate(-.4deg)}
+.sticky::before{content:"";position:absolute;top:-5px;left:50%;transform:translateX(-50%) rotate(-3deg);
+  width:44px;height:13px;background:rgba(237,230,216,.5);border:1px solid rgba(13,16,21,.16)}
+.sticky .sby{position:absolute;left:12px;bottom:8px;font-family:"Space Mono",monospace;font-size:8.5px;
+  letter-spacing:.12em;text-transform:uppercase;color:rgba(19,22,27,.55)}
+.sticky .srm{position:absolute;right:7px;bottom:5px;background:transparent;border:0;cursor:pointer;
+  font-size:15px;color:rgba(19,22,27,.4)}
+.sticky .srm:hover{color:#B23A00}
+.stickybar{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:4px}
+.stickybar input{flex:1;min-width:150px;background:transparent;border:1px dashed var(--faint);outline:none;
+  color:var(--chalk);font-family:Kalam,cursive;font-weight:700;font-size:16px;padding:9px 11px}
+.stickybar input::placeholder{color:var(--faint);font-family:"Space Mono",monospace;font-size:12.5px}
+.cpick{display:flex;gap:5px}
+.cpick button{width:22px;height:22px;border:1px solid var(--faint);cursor:pointer;padding:0}
+.cpick button.on{border-color:var(--chalk);box-shadow:0 0 0 2px rgba(237,230,216,.25)}
+.sweepbtn{width:100%;margin-top:11px;font-family:Anton,sans-serif;font-size:19px;text-transform:uppercase;
+  letter-spacing:.04em;padding:12px 14px;cursor:pointer;background:transparent;color:var(--violet);
+  border:1px solid var(--violet);box-shadow:0 0 24px rgba(139,92,246,.16),inset 0 0 26px rgba(139,92,246,.05)}
+.sweepbtn:hover{background:var(--violet);color:var(--void);box-shadow:0 0 38px rgba(139,92,246,.42)}
+.sweepbtn:disabled{opacity:.45;cursor:not-allowed;background:transparent;color:var(--violet)}
+.sweepnote{font-size:11px;color:var(--faint);line-height:1.5;margin-top:8px}
+.pin.bot::after{background:var(--violet);border-color:#2A1F49}
+.pin.bot .kn::after{content:" \00B7 auto";color:#5B3FA8}
 </style>
 
 <canvas id="field"></canvas>
@@ -376,10 +559,10 @@ button.stamp:disabled{opacity:.4;cursor:not-allowed}
     <div class="chip" id="roomChip">room</div>
   </div>
 
-  <div class="target">
-    <span class="nt">thrashing</span>
-    <a id="tgtLink" href="#" target="_blank" rel="noopener noreferrer">-</a>
-    <span class="nt">opens in your own tab &#8599;</span>
+  <div class="tline">
+    <a class="opensite" id="tgtLink" href="#" target="_blank" rel="noopener noreferrer">
+      open the site &#8599; <span class="u" id="tgtU"></span></a>
+    <span class="nt">it opens in your own tab, so logins still work</span>
   </div>
 
   <div class="railhead">
@@ -388,26 +571,66 @@ button.stamp:disabled{opacity:.4;cursor:not-allowed}
   </div>
   <div class="rail" id="rail"></div>
 
+  <div class="doors">
+    <button class="door" data-door="bug"><div class="dt">report a bug</div>
+      <div class="dd">Something is broken. Say what happened and how to make it happen again.</div></button>
+    <button class="door" data-door="feature"><div class="dt">suggest a feature</div>
+      <div class="dd">Not broken, missing. The thing that should obviously exist.</div></button>
+    <button class="door" data-door="design"><div class="dt">submit feedback</div>
+      <div class="dd">Colour, contrast, wording, layout. What is ugly or unreadable.</div></button>
+  </div>
+  <div class="doors" style="grid-template-columns:1fr">
+    <button class="door pr" data-door="pull"><div class="dt">&lt;/&gt; open a pull request</div>
+      <div class="dd">Pull the live source of the site, edit it here, and submit the diff. The reviewer reads every patch automatically.</div></button>
+  </div>
+
   <div class="deck">
     <div class="col">
+      <div id="prbench"></div>
       <div class="sect">the board <b id="wallN">0</b> <span style="margin-left:auto;color:var(--faint)" id="wallBreak"></span></div>
       <div class="board" id="board"></div>
-      <div class="empty" id="boardEmpty">Nothing pinned yet. Go break something.</div>
+      <div id="boardEmpty">
+        <div class="steps">
+          <div class="step"><div class="num">1</div><div class="sh">open the site</div>
+            <p>Hit the violet button up top. It opens in <b>your own tab</b> - keep this board in the other one.</p>
+            <span class="hw">both tabs, side by side</span></div>
+          <div class="step"><div class="num">2</div><div class="sh">work your lane</div>
+            <p>Your lane is on the right in orange. <b>Only test that.</b> Everyone else has a different one, which is how the whole site gets covered.</p>
+            <span class="hw">tap any lane to swap</span></div>
+          <div class="step"><div class="num">3</div><div class="sh">pin what you find</div>
+            <p>Bug, feature idea, colour change, or real code. If someone already found it, we <b>stop you and show you theirs</b>.</p>
+            <span class="hw">it all lands here &#8600;</span></div>
+        </div>
+        <div class="empty">Nothing pinned yet. Go break something.</div>
+      </div>
     </div>
 
     <div class="col">
-      <div class="brief" id="brief"></div>
+      <div class="sheet brief2 t1" id="brief"></div>
       <div class="crew" id="crew"></div>
 
-      <div class="sect">file it</div>
-      <div class="kindpick" id="kindPick"></div>
-      <textarea class="t" id="fText" maxlength="300" placeholder="what happened, in plain words"></textarea>
-      <div id="extra"></div>
-      <div class="lbl" style="margin:12px 0 6px">how bad</div>
-      <div class="sevpick" id="sevPick"></div>
-      <button class="go" id="fileIt">pin it to the board</button>
-      <div class="err" id="e1"></div>
-      <div id="gate"></div>
+      <div class="botcard">
+        <div class="bh">the reviewer</div>
+        <p>An AI that <b>reads code</b>. Submit a PATCH and it reviews the diff automatically. Say <b>@bot</b> in chat, or hit <b>ask reviewer</b> on any finding.</p>
+        <button class="sweepbtn" id="sweep">red team with AI &#9889;</button>
+        <div class="sweepnote" id="sweepNote">Fetches the live page and runs the standard pass: security headers, clickjacking, mixed content, tab-nabbing, viewport, alt text, password-over-GET. Real findings, pinned straight to the board.</div>
+      </div>
+
+      <div class="sheet hot t2">
+        <div class="sh2">file <em>a finding</em></div>
+        <div class="ss2">anything you found, in your own words</div>
+        <div class="sl" style="margin-top:16px">what kind</div>
+        <div class="kindpick paper" id="kindPick"></div>
+        <div class="hint2" id="kindHint"></div>
+        <div class="sl">what happened</div>
+        <textarea class="p" id="fText" maxlength="300" placeholder="in plain words"></textarea>
+        <div id="extra"></div>
+        <div class="sl">how bad</div>
+        <div class="sevpick paper" id="sevPick"></div>
+        <button class="stamp sm" id="fileIt">pin it to the board</button>
+        <div class="er2" id="e1"></div>
+        <div id="gate"></div>
+      </div>
 
       <div class="sect" style="margin-top:26px">the crew</div>
       <div class="tabs" id="tabs"></div>
@@ -415,11 +638,22 @@ button.stamp:disabled{opacity:.4;cursor:not-allowed}
         <canvas id="wb" width="760" height="680"></canvas>
         <div class="wbbar" id="wbbar"></div>
       </div>
+      <div class="pane" id="pane-notes">
+        <div class="stickies" id="stickies"></div>
+        <div class="stickybar">
+          <div class="cpick" id="cpick"></div>
+          <input id="nin" maxlength="220" placeholder="write a note everyone can see" autocomplete="off">
+          <button class="ghost" id="nadd">pin</button>
+        </div>
+      </div>
       <div class="pane" id="pane-plan">
-        <div class="plan" id="planList"></div>
-        <div class="cbar" style="border:1px solid var(--faint);margin-top:10px">
-          <input id="pin_" maxlength="200" placeholder="what are we actually going to do" autocomplete="off">
-          <button id="padd">add</button>
+        <div class="plan paper">
+          <div class="sl" style="font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--inkdim);margin-bottom:10px">what we're actually going to do</div>
+          <div id="planList"></div>
+          <div class="planbar">
+            <input id="pin_" maxlength="200" placeholder="add something the crew agreed on" autocomplete="off">
+            <button id="padd">add</button>
+          </div>
         </div>
       </div>
       <div class="pane on" id="pane-chat">
@@ -519,16 +753,16 @@ $("enter").addEventListener("click",function(){
     $("roomChip").textContent="room "+rc;
     setTarget(r.target);
     $("s0").className="screen corkwrap";$("s1").className="screen hall on";
-    buildPickers();buildTabs();startPoll();window.scrollTo(0,0);
+    buildPickers();buildTabs();buildCpick();startPoll();window.scrollTo(0,0);
   }).catch(function(){$("enter").disabled=false;$("e0").textContent="could not reach the room";});
 });
 $("nm").addEventListener("keydown",function(ev){if(ev.code==="Enter")$("enter").click();});
 $("tgt").addEventListener("keydown",function(ev){if(ev.code==="Enter")$("nm").focus();});
 
 function setTarget(t){
-  var a=$("tgtLink");
-  if(!t){a.textContent="no target set";a.removeAttribute("href");return;}
-  a.textContent=t.replace(/^https?:\/\//,"");a.href=t;
+  var a=$("tgtLink"),u=$("tgtU");
+  if(!t){a.style.opacity=".45";a.removeAttribute("href");if(u)u.textContent="no target set";return;}
+  a.style.opacity="1";a.href=t;if(u)u.textContent=t.replace(/^https?:\/\//,"").slice(0,42);
 }
 
 /* ---------- pickers ---------- */
@@ -536,7 +770,7 @@ var KLIST=[["bug","BUG"],["feature","FEATURE"],["design","DESIGN"],["patch","PAT
 function buildPickers(){
   $("kindPick").innerHTML=KLIST.map(function(k){
     return '<button data-k="'+k[0]+'"'+(k[0]===KIND?' class="on"':'')+'>'+
-      glyph(k[0],22,k[0]===KIND?"#FF6B1A":"#8A8578")+k[1]+'</button>';
+      glyph(k[0],22,k[0]===KIND?"#B23A00":"#4C5158")+k[1]+'</button>';
   }).join("");
   $("sevPick").innerHTML=[["low","minor"],["med","annoying"],["high","broken"]].map(function(s){
     return '<button data-s="'+s[0]+'"'+(s[0]===SEV?' class="on"':'')+'>'+s[1]+'</button>';
@@ -549,22 +783,30 @@ $("kindPick").addEventListener("click",function(e){
 $("sevPick").addEventListener("click",function(e){
   var b=e.target.closest("[data-s]");if(!b)return;SEV=b.dataset.s;buildPickers();
 });
+var KHINT={
+  bug:"Something is broken. Say what happened and how to make it happen again.",
+  feature:"Not broken - missing. The thing that should obviously exist and does not.",
+  design:"Colour, contrast, spacing, hierarchy. Drop a hex if you have one.",
+  patch:"Actual code. Prefix lines with + and - and it renders as a diff. The reviewer reads it automatically."
+};
 function extraFields(){
   var h="";
   if(KIND==="bug"||KIND==="patch"){
-    h+='<div class="lbl" style="margin:12px 0 6px">how to make it happen again</div>'+
-       '<textarea class="t" id="fSteps" maxlength="300" placeholder="375px wide, tap signup, nothing happens" style="min-height:46px"></textarea>';
+    h+='<div class="sl">how to make it happen again</div>'+
+       '<textarea class="p" id="fSteps" maxlength="300" placeholder="375px wide, tap signup, nothing happens" style="min-height:44px"></textarea>';
   }
   if(KIND==="patch"){
-    h+='<div class="lbl" style="margin:12px 0 6px">the fix</div>'+
-       '<textarea class="t code" id="fCode" maxlength="4000" placeholder="paste code. prefix lines with + or - and they render as a diff." spellcheck="false"></textarea>';
+    h+='<div class="sl">the fix</div>'+
+       '<textarea class="p code" id="fCode" maxlength="4000" placeholder="paste code. prefix lines with + or - and it renders as a diff." spellcheck="false"></textarea>';
   }
   if(KIND==="design"){
-    h+='<div class="lbl" style="margin:12px 0 6px">colour, if it is one</div>'+
-       '<input class="t" id="fColor" maxlength="40" placeholder="#FF6B1A, or leave it empty" style="font-family:\'Space Mono\',monospace;font-size:15px;text-transform:none">';
+    h+='<div class="sl">colour, if it is one</div>'+
+       '<input class="p" id="fColor" maxlength="40" placeholder="#FF6B1A, or leave it empty">';
   }
   $("extra").innerHTML=h;
-  $("sevPick").parentNode.querySelector(".lbl").textContent=(KIND==="bug"?"how bad":"how much it matters");
+  var kh=$("kindHint");if(kh)kh.textContent=KHINT[KIND]||"";
+  var sl=$("sevPick").previousElementSibling;
+  if(sl&&sl.className==="sl")sl.textContent=(KIND==="bug"?"how bad":"how much it matters");
 }
 
 /* ---------- filing, and the gate ---------- */
@@ -596,12 +838,13 @@ function send(force){
   }).catch(function(){$("fileIt").disabled=false;$("e1").textContent="could not reach the room";});
 }
 function showGate(d){
-  $("gate").innerHTML='<div class="gate"><h6>somebody already said that</h6>'+
-    '<p>Same finding, different words. Back theirs up, or say something nobody has said yet.</p>'+
-    '<div class="dq">'+esc(d.text)+'<b>#'+d.id+' &middot; '+esc(d.by)+'</b></div>'+
+  $("gate").innerHTML='<div class="gate" style="border-color:#B23A00;background:rgba(178,58,0,.07)"><h6 style="color:#B23A00">somebody already said that</h6>'+
+    '<p style="color:var(--inkdim)">Same finding, different words. Back theirs up, or say something nobody has said yet.</p>'+
+    '<div class="dq" style="color:var(--ink);border-color:#B23A00">'+esc(d.text)+
+      '<b style="color:var(--inkdim)">#'+d.id+' &middot; '+esc(d.by)+'</b></div>'+
     '<div class="stack" style="margin-top:0">'+
-      '<button class="ghost" id="gPlus">+1 theirs instead</button>'+
-      '<button class="ghost" id="gForce">no, mine is different</button>'+
+      '<button class="ghost" style="border-color:rgba(13,16,21,.35);color:var(--inkdim)" id="gPlus">+1 theirs instead</button>'+
+      '<button class="ghost" style="border-color:rgba(13,16,21,.35);color:var(--inkdim)" id="gForce">no, mine is different</button>'+
     '</div></div>';
   $("gPlus").onclick=function(){
     post("plus",{id:ME.id,find:d.id}).then(function(){clearForm();pull();});
@@ -621,7 +864,7 @@ function paint(d){
   var mine=(d.players||[]).filter(function(p){return p.id===ME.id;})[0];
   if(mine)ME.lane=mine.lane;
   if(d.target)setTarget(d.target);
-  drawRail();drawBrief();drawCrew();drawBoard();drawPlan();drawTabs();
+  drawRail();drawBrief();drawCrew();drawBoard();drawPlan();drawNotes();drawTabs();
   if(d.strokes&&d.sid!==SIDS){SIDS=d.sid;drawWB(d.strokes);}
   if(d.msgs&&d.msgs.length){
     var log=$("clog"),near=(log.scrollHeight-log.scrollTop-log.clientHeight)<90;
@@ -656,8 +899,9 @@ $("rail").addEventListener("click",function(e){
 });
 function drawBrief(){
   var L=LANES.filter(function(l){return l.id===ME.lane;})[0];if(!L)return;
-  $("brief").innerHTML='<div class="bl">'+esc(L.label)+'</div><div class="bb">'+esc(L.brief)+'</div>'+
-    '<div class="sw">'+LANES.filter(function(l){return l.id!==ME.lane;}).map(function(l){
+  $("brief").innerHTML='<div class="sl">your lane</div><div class="bl2">'+esc(L.label)+'</div>'+
+    '<div class="bb2">'+esc(L.brief)+'</div>'+
+    '<div class="sw2">'+LANES.filter(function(l){return l.id!==ME.lane;}).map(function(l){
       return '<button data-l="'+l.id+'">'+esc(l.label)+'</button>';}).join("")+'</div>';
 }
 $("brief").addEventListener("click",function(e){
@@ -665,7 +909,14 @@ $("brief").addEventListener("click",function(e){
   post("relane",{id:ME.id,lane:b.dataset.l}).then(function(){pull();});
 });
 function drawCrew(){
-  var h=(LAST.players||[]).map(function(p){
+  var h='<div class="pf"><svg width="32" height="32" viewBox="0 0 26 26" aria-hidden="true">'+
+    '<rect x="3.2" y="6" width="19.6" height="15" fill="none" stroke="#8B5CF6" stroke-width="1.2"/>'+
+    '<circle cx="9" cy="13" r="1.7" fill="#8B5CF6"/><circle cx="17" cy="13" r="1.7" fill="#8B5CF6"/>'+
+    '<path d="M9.5 17.4 L16.5 17.4" stroke="#8B5CF6" stroke-width="1.3" stroke-linecap="round"/>'+
+    '<path d="M13 6 L13 3.2" stroke="#8B5CF6" stroke-width="1.2" stroke-linecap="round"/>'+
+    '<circle cx="13" cy="2.4" r="1.1" fill="#8B5CF6"/></svg>'+
+    '<span style="color:#8B5CF6">REVIEWER</span><span class="ln">reads code</span></div>'+
+    (LAST.players||[]).map(function(p){
     var L=LANES.filter(function(l){return l.id===p.lane;})[0];
     return '<div class="pf'+(p.id===ME.id?" me":"")+'">'+avatar(p.av,32)+
       '<span>'+esc(p.name)+'</span><span class="ln">'+esc(L?L.label:"")+'</span></div>';
@@ -689,7 +940,7 @@ function drawBoard(){
   var h=fs.map(function(f){
     var tilt=[-1.2,0,1][f.id%3];
     var hot=(f.sev==="high"&&f.status==="open");
-    var cls="pin "+(f.kind==="patch"?"patch ":"")+(f.status==="merged"?"merged ":"")+
+    var cls="pin "+(f.bot?"bot ":"")+(f.kind==="patch"?"patch ":"")+(f.status==="merged"?"merged ":"")+
       (f.status==="closed"?"closed ":"")+(hot?"hot":"");
     var mine=ME.name&&f.plus.indexOf(ME.name)>=0;
     var body="";
@@ -697,7 +948,7 @@ function drawBoard(){
     if(f.kind==="design"&&f.color)body+='<div style="margin-bottom:8px"><span class="swatch" style="background:'+esc(f.color)+'"></span><span style="font-size:12px">'+esc(f.color)+'</span></div>';
     if(f.steps)body+='<div class="fs">'+esc(f.steps)+'</div>';
     var reps=(f.replies||[]).map(function(r){
-      return '<div class="rep"><b>'+esc(r.by)+'</b> '+esc(r.text)+'</div>';}).join("");
+      return '<div class="rep'+(r.bot?" bot":"")+'"><b>'+esc(r.by)+'</b> '+esc(r.text)+'</div>';}).join("");
     return '<div class="'+cls+'" style="transform:rotate('+tilt+'deg)" data-f="'+f.id+'">'+
       (f.status==="merged"?'<span class="stamp">shipped</span>':'')+
       '<div class="kh">'+glyph(f.kind,26)+'<div><div class="kn">'+esc((KINDS[f.kind]||{}).label||f.kind)+'</div></div>'+
@@ -706,6 +957,7 @@ function drawBoard(){
       '<div class="marg"><span class="by">'+esc(f.by)+' &middot; '+esc(f.lane)+'</span>'+
         '<button class="plus'+(mine?" on":"")+'" data-a="plus">+'+f.plus.length+'</button>'+
         (f.kind==="patch"&&f.code?'<button data-a="copy">copy</button>':'')+
+        '<button data-a="ask">ask reviewer</button>'+
         '<button data-a="'+(f.status==="merged"?"open":"merged")+'">'+(f.status==="merged"?"unship":"ship it")+'</button>'+
         '<button data-a="'+(f.status==="closed"?"open":"closed")+'">'+(f.status==="closed"?"reopen":"not a bug")+'</button>'+
       '</div>'+
@@ -723,6 +975,10 @@ $("board").addEventListener("click",function(e){
     var f=(LAST.finds||[]).filter(function(x){return x.id===fid;})[0];
     if(f)navigator.clipboard.writeText(f.code||"").then(function(){b.textContent="copied";});
   }
+  else if(a==="ask"){
+    b.textContent="reading...";b.disabled=true;
+    post("askbot",{id:ME.id,find:fid}).then(function(){pull();});
+  }
   else if(a==="reply"){
     var inp=card.querySelector(".repbar input"),t=inp.value.trim();
     if(!t)return;inp.value="";post("reply",{id:ME.id,find:fid,text:t}).then(pull);
@@ -738,10 +994,10 @@ $("board").addEventListener("keydown",function(e){
 
 /* ---------- tabs ---------- */
 function buildTabs(){
-  $("tabs").innerHTML=[["chat","CHAT"],["board","WHITEBOARD"],["plan","THE PLAN"]].map(function(t){
+  $("tabs").innerHTML=[["chat","CHAT"],["notes","STICKIES"],["board","WHITEBOARD"],["plan","THE PLAN"]].map(function(t){
     return '<button data-t="'+t[0]+'"'+(t[0]===TAB?' class="on"':'')+'>'+t[1]+'<span class="n" id="n-'+t[0]+'"></span></button>';
   }).join("");
-  ["chat","board","plan"].forEach(function(t){$("pane-"+t).className="pane"+(t===TAB?" on":"");});
+  ["chat","notes","board","plan"].forEach(function(t){$("pane-"+t).className="pane"+(t===TAB?" on":"");});
   buildWBbar();
 }
 function drawTabs(){
@@ -829,7 +1085,27 @@ function addPlan(){
   var t=$("pin_").value.trim();if(!t)return;$("pin_").value="";
   post("plan",{id:ME.id,text:t}).then(pull);
 }
+setTimeout(function(){
+  var sw=$("sweep");if(!sw)return;
+  sw.addEventListener("click",function(){
+    if(DEMO){$("sweepNote").textContent="demo board - the sweep only runs on a real room";return;}
+    if(!LAST.target){$("sweepNote").textContent="no target set on this room";return;}
+    sw.disabled=true;sw.textContent="sweeping...";
+    $("sweepNote").textContent="Fetching the page and running the checks. A few seconds.";
+    post("sweep",{id:ME.id}).then(function(r){
+      sw.disabled=false;sw.textContent="red team with AI \u26A1";
+      if(r.error){$("sweepNote").textContent=r.error;return;}
+      $("sweepNote").textContent=r.added+" pinned, "+r.dupes+" already found, "+r.total+" checked.";
+      pull();
+    }).catch(function(){sw.disabled=false;sw.textContent="red team with AI \u26A1";});
+  });
+},0);
 $("padd").addEventListener("click",addPlan);
+setTimeout(function(){
+  var na=$("nadd"),ni=$("nin");
+  if(na)na.addEventListener("click",addNote);
+  if(ni)ni.addEventListener("keydown",function(ev){if(ev.code==="Enter")addNote();});
+},0);
 $("pin_").addEventListener("keydown",function(ev){if(ev.code==="Enter")addPlan();});
 
 /* ---------- chat ---------- */
@@ -886,14 +1162,117 @@ $("demo").addEventListener("click",function(){
   $("roomChip").textContent="demo board";
   setTarget(LAST.target);
   $("s0").className="screen corkwrap";$("s1").className="screen hall on";
-  buildPickers();buildTabs();
-  drawRail();drawBrief();drawCrew();drawBoard();drawPlan();drawTabs();
+  buildPickers();buildTabs();buildCpick();
+  LAST.notes=[{id:1,text:"the checkout flow is the whole product, somebody take THE FLOW",by:"SAM",c:"o"},
+    {id:2,text:"do not test the blog, it is a subdomain and out of scope",by:"JESS",c:"y"},
+    {id:3,text:"staging password is in the pinned chat message",by:"MARCO",c:"v"}];
+  drawRail();drawBrief();drawCrew();drawBoard();drawPlan();drawNotes();drawTabs();
   $("clog").innerHTML='<div class="m sys"><div class="bd">demo board &middot; nothing here is live</div></div>'+
+    '<div class="m bot"><div class="nm">REVIEWER</div><div class="bd">reviewed #4: The target=_blank fix is right, but without rel=noopener on older browsers the new tab can reach back into window.opener. Add it.</div></div>'+
     '<div class="m"><div class="nm">SAM</div><div class="bd">the header thing is on every page not just home</div></div>'+
     '<div class="m find"><div class="nm">JESS</div><div class="bd">PATCH: fix: footer links open in the same tab</div></div>'+
     '<div class="m"><div class="nm">MARCO</div><div class="bd">who has keyboard? nobody has touched it</div></div>';
   window.scrollTo(0,0);
 });
+
+
+/* ---- the three doors ---- */
+document.addEventListener("click",function(e){
+  var d=e.target.closest("[data-door]");if(!d)return;
+  var k=d.dataset.door;
+  if(k==="pull"){openPR();return;}
+  KIND=k;buildPickers();
+  var f=$("fText");if(f){f.scrollIntoView({block:"center",behavior:"smooth"});setTimeout(function(){f.focus();},250);}
+});
+
+/* ---- the pull request bench ---- */
+var PRSRC="",PROPEN=false;
+function openPR(){
+  if(PROPEN){$("prbench").scrollIntoView({block:"start",behavior:"smooth"});return;}
+  PROPEN=true;
+  $("prbench").innerHTML='<div class="prbench"><div class="ph2">pull <em>the source</em></div>'+
+    '<div class="pmeta">Fetching <b>'+esc((LAST.target||"").replace(/^https?:\/\//,""))+'</b> ...</div>'+
+    '<div class="pmeta">This runs server side, so the site\'s CORS rules do not apply.</div></div>';
+  $("prbench").scrollIntoView({block:"start",behavior:"smooth"});
+  if(DEMO){renderPR("<!doctype html>\n<html>\n  <head><title>Example</title></head>\n  <body>\n    <a href=\"/terms\">Terms</a>\n    <form id=\"signup\"><button>Sign up</button></form>\n  </body>\n</html>",{status:200,bytes:170,type:"text/html"});return;}
+  post("pull",{id:ME.id,url:LAST.target}).then(function(r){
+    if(r.error){
+      $("prbench").innerHTML='<div class="prbench"><div class="ph2">pull <em>failed</em></div>'+
+        '<div class="pmeta">'+esc(r.error)+'</div>'+
+        '<div class="prrow"><button class="inkbtn alt" onclick="location.reload()">try again</button></div></div>';
+      return;
+    }
+    renderPR(r.body,r);
+  });
+}
+function renderPR(body,meta){
+  PRSRC=body;
+  $("prbench").innerHTML='<div class="prbench"><div class="ph2">pull <em>request</em></div>'+
+    '<div class="pmeta">HTTP <b>'+esc(String(meta.status))+'</b> &middot; <b>'+esc(String(meta.bytes))+'</b> bytes'+
+      (meta.bytes>60000?' (showing first 60k)':'')+' &middot; '+esc((meta.type||"").split(";")[0])+'</div>'+
+    '<textarea id="prCode" spellcheck="false"></textarea>'+
+    '<div class="prrow">'+
+      '<button class="inkbtn" id="prSubmit">submit the diff</button>'+
+      '<button class="inkbtn alt" id="prReset">reset</button>'+
+      '<span class="k" id="prK">edit anything, we diff it against what we pulled</span>'+
+    '</div></div>';
+  $("prCode").value=body;
+  $("prReset").onclick=function(){$("prCode").value=PRSRC;$("prK").textContent="reset to the pulled source";};
+  $("prSubmit").onclick=function(){
+    var now=$("prCode").value;
+    var d=makeDiff(PRSRC,now);
+    if(!d){$("prK").textContent="nothing changed yet";return;}
+    KIND="patch";buildPickers();
+    $("fText").value="patch: "+(d.split("\n").filter(function(l){return l.charAt(0)==="+";})[0]||"source edit").replace(/^\+/,"").trim().slice(0,120);
+    setTimeout(function(){
+      if($("fCode")){$("fCode").value=d;}
+      $("fText").scrollIntoView({block:"center",behavior:"smooth"});
+      $("prK").textContent="loaded into the file form, hit pin it";
+    },60);
+  };
+}
+/* a real line diff, only the changed regions, with context */
+function makeDiff(a,b){
+  var A=a.split("\n"),B=b.split("\n"),out=[],changed=false;
+  var max=Math.max(A.length,B.length);
+  for(var i=0;i<max;i++){
+    if(A[i]===B[i])continue;
+    changed=true;
+    if(i>0&&A[i-1]!==undefined&&A[i-1]===B[i-1])out.push("  "+A[i-1]);
+    if(A[i]!==undefined)out.push("- "+A[i]);
+    if(B[i]!==undefined)out.push("+ "+B[i]);
+    if(out.length>120){out.push("  ... truncated");break;}
+  }
+  return changed?out.join("\n"):"";
+}
+
+/* ---- sticky notes ---- */
+var NC="y";
+function buildCpick(){
+  var b=$("cpick");if(!b)return;
+  b.innerHTML=[["y","#E8D26A"],["o","#F0A868"],["v","#B9A4E8"],["c","#8FD3CB"]].map(function(c){
+    return '<button data-nc="'+c[0]+'" class="'+(c[0]===NC?"on":"")+'" style="background:'+c[1]+'" aria-label="colour"></button>';
+  }).join("");
+}
+document.addEventListener("click",function(e){
+  var c=e.target.closest("[data-nc]");if(c){NC=c.dataset.nc;buildCpick();return;}
+  var r=e.target.closest("[data-nrm]");
+  if(r&&!DEMO){post("notepoke",{id:ME.id,item:Number(r.dataset.nrm)}).then(pull);}
+});
+function addNote(){
+  var t=$("nin").value.trim();if(!t||DEMO)return;$("nin").value="";
+  post("note",{id:ME.id,text:t,c:NC}).then(pull);
+}
+function drawNotes(){
+  var host=$("stickies");if(!host)return;
+  var ns=LAST.notes||[];
+  var h=ns.length?ns.map(function(x){
+    return '<div class="sticky '+esc(x.c||"y")+'">'+esc(x.text)+
+      '<span class="sby">'+esc(x.by)+'</span>'+
+      '<button class="srm" data-nrm="'+x.id+'" aria-label="remove">&times;</button></div>';
+  }).join(""):'<div class="empty">No notes yet. Anything the crew should see goes here.</div>';
+  if(host.dataset.k!==h){host.innerHTML=h;host.dataset.k=h;}
+}
 
 /* ---------- the field: chalk dust that opens into eyes, kept out of the way ---------- */
 var cv=$("field"),ctx=cv.getContext("2d"),W=0,H=0,DPR=1,PTS=[],MX=-9e9,MY=-9e9,TX=0,TY=0,ON=0,QUIET=0;

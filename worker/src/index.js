@@ -25,6 +25,19 @@ const KINDS = {
 };
 const STATUS = { open: 1, merged: 1, closed: 1 };
 
+const REVIEWER = [
+  "You are THE REVIEWER, a senior engineer doing code review on a red-team board.",
+  "You are blunt, fast and useful. You are not a cheerleader and not a chatbot.",
+  "",
+  "RULES:",
+  "- Maximum THREE short sentences. No preamble, no sign-off, no lists.",
+  "- Lead with the verdict: does this actually fix what it claims?",
+  "- Name a CONCRETE risk if there is one: what input, what browser, what edge case breaks it.",
+  "- If the patch is fine, say so in one line and name the one thing still missing.",
+  "- Never invent code that was not shown. Never rewrite the whole thing.",
+  "- No markdown headers, no bullet points, no emoji, no backtick fences."
+].join("\n");
+
 const CORS = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "GET,POST,OPTIONS",
@@ -52,6 +65,82 @@ function similar(a, b) {
   return hit / Math.min(A.size, B.size);
 }
 
+
+/* Real checks against the real response. Nothing here is guessed:
+   every finding is something present or absent in the bytes we fetched. */
+function sweepChecks(res, html, url) {
+  const H = (k) => (res.headers.get(k) || "").toLowerCase();
+  const https = /^https:/i.test(url);
+  const out = [];
+  const add = (lane, sev, text, steps) => out.push({ lane, sev, text, steps });
+
+  if (!H("content-security-policy")) {
+    add("edge", "high", "No Content-Security-Policy header, so any injected script runs freely",
+      "curl -sI " + url + " | grep -i content-security-policy  ->  nothing");
+  }
+  if (!H("x-frame-options") && !/frame-ancestors/.test(H("content-security-policy"))) {
+    add("edge", "high", "Nothing stops this page being framed, so it can be clickjacked",
+      "no x-frame-options and no frame-ancestors in CSP");
+  }
+  if (https && !H("strict-transport-security")) {
+    add("edge", "med", "HTTPS with no HSTS header, so a first visit can still be downgraded",
+      "curl -sI " + url + " | grep -i strict-transport-security  ->  nothing");
+  }
+  if (H("x-content-type-options") !== "nosniff") {
+    add("edge", "med", "No nosniff header, so the browser may MIME-sniff an upload into script",
+      "x-content-type-options is " + (H("x-content-type-options") || "absent"));
+  }
+  const srv = res.headers.get("server") || "";
+  if (/\d/.test(srv)) {
+    add("edge", "low", "Server header leaks an exact version: " + srv, "curl -sI " + url + " | grep -i ^server");
+  }
+
+  const blanks = (html.match(/<a\b[^>]*target=["']?_blank[^>]*>/gi) || []);
+  const unsafe = blanks.filter((t) => !/rel=["'][^"']*noopener/i.test(t));
+  if (unsafe.length) {
+    add("links", "med", unsafe.length + " link(s) open a new tab without rel=noopener, so the new page can reach window.opener",
+      "first one: " + unsafe[0].slice(0, 110));
+  }
+  if (https) {
+    const mixed = (html.match(/(?:src|href)=["']http:\/\/[^"']+/gi) || []);
+    if (mixed.length) add("slow", "high", mixed.length + " resource(s) loaded over plain http on an https page",
+      "first one: " + mixed[0].slice(0, 110));
+  }
+  const inline = (html.match(/\son[a-z]+=["']/gi) || []);
+  if (inline.length > 2) {
+    add("edge", "low", inline.length + " inline event handlers in the markup, which any CSP will block later",
+      "grep for on-click style attributes in the source");
+  }
+  if (/\bdocument\.write\s*\(/.test(html)) {
+    add("slow", "med", "document.write is still in the page, which blocks parsing and breaks on slow connections", "search the source for document.write");
+  }
+  if (!/<meta[^>]+name=["']viewport["']/i.test(html)) {
+    add("mobile", "high", "No viewport meta tag, so this renders desktop-width and unusable on a phone", "open it on a 375px screen");
+  }
+  const imgs = (html.match(/<img\b[^>]*>/gi) || []);
+  const noalt = imgs.filter((t) => !/\balt=/i.test(t));
+  if (noalt.length) {
+    add("a11y", "med", noalt.length + " of " + imgs.length + " images have no alt attribute",
+      "first one: " + noalt[0].slice(0, 110));
+  }
+  if (!/<html[^>]+lang=/i.test(html)) {
+    add("a11y", "low", "The html tag has no lang attribute, so screen readers guess the language", "look at the opening html tag");
+  }
+  const title = (html.match(/<title[^>]*>([\s\S]{0,200}?)<\/title>/i) || [])[1];
+  if (!title || !title.trim()) {
+    add("copy", "med", "The page has no title, so every tab and every search result is blank", "check the tab name");
+  }
+  const pw = /<input[^>]+type=["']password["'][^>]*>/i.test(html);
+  const getform = /<form[^>]+method=["']get["'][^>]*>/i.test(html);
+  if (pw && getform) {
+    add("forms", "high", "A password field sits on a form that may submit by GET, putting the password in the URL", "check the form method around the password input");
+  }
+  if (!/<meta[^>]+name=["']description["']/i.test(html)) {
+    add("copy", "low", "No meta description, so search and link previews scrape whatever text is first", "view source, look for meta description");
+  }
+  return out;
+}
+
 export class Room extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
@@ -59,8 +148,9 @@ export class Room extends DurableObject {
     ctx.blockConcurrencyWhile(async () => {
       this.s = (await ctx.storage.get("s")) || {
         target: "", players: [], finds: [], msgs: [], seq: 0, fid: 0, started: 0,
-        strokes: [], sid: 0, plan: [], pid: 0
+        strokes: [], sid: 0, plan: [], pid: 0, notes: [], nid: 0
       };
+      if (!this.s.notes) { this.s.notes = []; this.s.nid = 0; }
       if (!this.s.strokes) { this.s.strokes = []; this.s.sid = 0; }
       if (!this.s.plan) { this.s.plan = []; this.s.pid = 0; }
     });
@@ -95,6 +185,44 @@ export class Room extends DurableObject {
     return out;
   }
 
+  async review(kind, text, code, steps, asker) {
+    const E = this.env;
+    if (!E || !E.AI) return null;
+    const s = this.s;
+    s.ai = s.ai || { n: 0, last: 0 };
+    const now = Date.now();
+    if (s.ai.n >= 200) return null;
+    if (now - s.ai.last < 400) return null;
+    s.ai.n += 1; s.ai.last = now;
+
+    const what = kind === "patch"
+      ? ("A patch was submitted.\nIt claims: " + text +
+         (steps ? "\nRepro it was meant to fix: " + steps : "") +
+         "\n\nTHE CODE:\n" + String(code).slice(0, 2600))
+      : ("Someone filed a " + kind + " on the board:\n" + text +
+         (steps ? "\nSteps: " + steps : ""));
+
+    try {
+      const out = await E.AI.run("@cf/meta/llama-3.1-8b-instruct-fast", {
+        max_tokens: 190,
+        temperature: 0.5,
+        messages: [
+          { role: "system", content: REVIEWER + "\n\nThe site being tested is: " + (s.target || "unknown") },
+          { role: "user", content: what + "\n\nReview it." }
+        ]
+      });
+      let r = "";
+      if (out) {
+        if (typeof out.response === "string") r = out.response;
+        else if (out.choices && out.choices[0] && out.choices[0].message &&
+                 typeof out.choices[0].message.content === "string") r = out.choices[0].message.content;
+      }
+      r = (r + "").replace(/```[a-z]*/gi, "").replace(/^[\s"']+|[\s"']+$/g, "").replace(/\s+/g, " ").trim();
+      if (r.length > 400) r = r.slice(0, 397).replace(/\s\S*$/, "") + ".";
+      return r.length > 4 ? r : null;
+    } catch (e) { return null; }
+  }
+
   async fetch(req) {
     const url = new URL(req.url);
     const parts = url.pathname.split("/").filter(Boolean);
@@ -115,6 +243,7 @@ export class Room extends DurableObject {
         strokes: s.strokes,
         sid: s.sid,
         plan: s.plan,
+        notes: s.notes,
         msgs: s.msgs.filter((m) => m.i > since)
       });
     }
@@ -202,6 +331,15 @@ export class Room extends DurableObject {
       p.finds = (p.finds || 0) + 1;
       this.push(p.name, KINDS[kind].label + ": " + text, "find");
       await this.save();
+
+      if (kind === "patch" && code) {
+        const said = await this.review(kind, text, code, steps, p.name);
+        if (said) {
+          find.replies.push({ by: "REVIEWER", av: -1, text: said, bot: 1 });
+          this.push("REVIEWER", "reviewed #" + find.id + ": " + said, "bot");
+          await this.save();
+        }
+      }
       return json({ ok: true, find });
     }
 
@@ -240,6 +378,23 @@ export class Room extends DurableObject {
       f.replies = f.replies || [];
       f.replies.push({ by: p.name, av: p.av, text });
       if (f.replies.length > 40) f.replies = f.replies.slice(-40);
+      await this.save();
+      return json({ ok: true, replies: f.replies });
+    }
+
+    if (act === "askbot") {
+      const p = this.p(clean(b.id, 40));
+      if (!p) return json({ error: "not in room" }, 403);
+      const f = s.finds.find((x) => x.id === Number(b.find));
+      if (!f) return json({ error: "no such find" }, 404);
+      const said = await this.review(f.kind, f.text, f.code || "", f.steps || "", p.name);
+      f.replies = f.replies || [];
+      if (said) {
+        f.replies.push({ by: "REVIEWER", av: -1, text: said, bot: 1 });
+        this.push("REVIEWER", "reviewed #" + f.id + ": " + said, "bot");
+      } else {
+        f.replies.push({ by: "REVIEWER", av: -1, text: "Reviewer is offline. Read it yourself.", bot: 1 });
+      }
       await this.save();
       return json({ ok: true, replies: f.replies });
     }
@@ -320,19 +475,148 @@ export class Room extends DurableObject {
       return json({ ok: true, plan: s.plan });
     }
 
+    if (act === "sweep") {
+      const p = this.p(clean(b.id, 40));
+      if (!p) return json({ error: "not in room" }, 403);
+      let u = s.target;
+      if (!u) return json({ error: "no target set" }, 400);
+      if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+      let host = "";
+      try { host = new URL(u).hostname; } catch (e) { return json({ error: "bad url" }, 400); }
+      if (/^(localhost|127\.|0\.|10\.|192\.168\.|169\.254\.)/i.test(host)) {
+        return json({ error: "refusing to fetch a private address" }, 400);
+      }
+
+      let res, html;
+      try {
+        res = await fetch(u, { headers: { "user-agent": "Mozilla/5.0 (compatible; DogpileBot/1.0)" }, redirect: "follow" });
+        html = await res.text();
+      } catch (e) {
+        return json({ error: "could not fetch that: " + ((e && e.message) || "blocked") }, 502);
+      }
+
+      const hits = sweepChecks(res, html.slice(0, 400000), u);
+      this.push("SYS", p.name + " ran the AI red team sweep", "sys");
+
+      let added = 0, dupes = 0;
+      for (const h of hits) {
+        const fp = fingerprint(h.text);
+        const clash = s.finds.some((f) => similar(fp, f.fp) >= 0.6);
+        if (clash) { dupes += 1; continue; }
+        s.fid += 1;
+        s.finds.unshift({
+          id: s.fid, by: "REVIEWER", av: -1, lane: h.lane, text: h.text, steps: h.steps,
+          sev: h.sev, kind: "bug", code: "", color: "", status: "open", fp,
+          plus: [], dead: false, replies: [], bot: 1
+        });
+        added += 1;
+      }
+      if (s.finds.length > 200) s.finds.length = 200;
+
+      let line = "Swept " + host + ": " + added + " new, " + dupes + " already on the board.";
+      if (!hits.length) line = "Swept " + host + ". The mechanical checks came back clean, which only means the easy stuff is done.";
+      this.push("REVIEWER", line, "bot");
+
+      const said = await this.review("bug",
+        "Automated sweep of " + u + " returned these: " + hits.map((h) => h.text).join(" | "),
+        "", "", p.name);
+      if (said) this.push("REVIEWER", said, "bot");
+
+      await this.save();
+      return json({ ok: true, added, dupes, total: hits.length });
+    }
+
+    if (act === "pull") {
+      const p = this.p(clean(b.id, 40));
+      if (!p) return json({ error: "not in room" }, 403);
+      let u = clean(b.url, 400) || s.target;
+      if (!u) return json({ error: "no url" }, 400);
+      if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+      let host = "";
+      try { host = new URL(u).hostname; } catch (e) { return json({ error: "bad url" }, 400); }
+      if (/^(localhost|127\.|0\.|10\.|192\.168\.|169\.254\.)/i.test(host)) {
+        return json({ error: "refusing to fetch a private address" }, 400);
+      }
+      try {
+        const res = await fetch(u, {
+          headers: { "user-agent": "Mozilla/5.0 (compatible; DogpileBot/1.0)" },
+          redirect: "follow"
+        });
+        const ct = res.headers.get("content-type") || "";
+        let body = await res.text();
+        const full = body.length;
+        if (body.length > 60000) body = body.slice(0, 60000);
+        return json({ ok: true, url: u, status: res.status, type: ct, bytes: full, body });
+      } catch (e) {
+        return json({ error: "could not fetch that: " + ((e && e.message) || "blocked") }, 502);
+      }
+    }
+
+    /* sticky notes: freeform, everyone sees them, not findings */
+    if (act === "note") {
+      const p = this.p(clean(b.id, 40));
+      if (!p) return json({ error: "not in room" }, 403);
+      const text = clean(b.text, 220);
+      if (!text) return json({ error: "empty" }, 400);
+      s.nid += 1;
+      s.notes.unshift({ id: s.nid, text, by: p.name, av: p.av, c: clean(b.c, 12) || "y" });
+      if (s.notes.length > 60) s.notes.length = 60;
+      await this.save();
+      return json({ ok: true, notes: s.notes });
+    }
+    if (act === "notepoke") {
+      const p = this.p(clean(b.id, 40));
+      if (!p) return json({ error: "not in room" }, 403);
+      s.notes = s.notes.filter((x) => x.id !== Number(b.item));
+      await this.save();
+      return json({ ok: true, notes: s.notes });
+    }
+
     if (act === "say") {
       const p = this.p(clean(b.id, 40));
       if (!p) return json({ error: "not in room" }, 403);
       const text = clean(b.text, 240);
       if (!text) return json({ error: "empty" }, 400);
       this.push(p.name, text, "say");
+      if (/@(bot|reviewer)\b/i.test(text)) {
+        const E2 = this.env;
+        let said = null;
+        if (E2 && E2.AI) {
+          const recent = s.finds.slice(0, 4).map((f) => "#" + f.id + " [" + f.kind + "] " + f.text).join("\n");
+          const gaps = LANES.filter((l) => {
+            const c = this.coverage()[l.id];
+            return c && c.people === 0 && c.finds === 0;
+          }).map((l) => l.label);
+          try {
+            const out = await E2.AI.run("@cf/meta/llama-3.1-8b-instruct-fast", {
+              max_tokens: 170, temperature: 0.6,
+              messages: [
+                { role: "system", content: REVIEWER +
+                  "\n\nYou are also watching a red-team session on " + (s.target || "a site") +
+                  ".\nFindings so far:\n" + (recent || "nothing yet") +
+                  "\nLanes nobody has touched: " + (gaps.join(", ") || "none") },
+                { role: "user", content: p.name + " asked you: " + text }
+              ]
+            });
+            let r = "";
+            if (out) {
+              if (typeof out.response === "string") r = out.response;
+              else if (out.choices && out.choices[0] && out.choices[0].message) r = out.choices[0].message.content || "";
+            }
+            r = (r + "").replace(/```[a-z]*/gi, "").replace(/^[\s"']+|[\s"']+$/g, "").replace(/\s+/g, " ").trim();
+            if (r.length > 340) r = r.slice(0, 337).replace(/\s\S*$/, "") + ".";
+            said = r.length > 4 ? r : null;
+          } catch (e) { said = null; }
+        }
+        this.push("REVIEWER", said || "Reviewer is offline.", "bot");
+      }
       await this.save();
       return json({ ok: true });
     }
 
     if (act === "reset") {
       this.s = { target: "", players: [], finds: [], msgs: [], seq: 0, fid: 0, started: 0,
-        strokes: [], sid: 0, plan: [], pid: 0 };
+        strokes: [], sid: 0, plan: [], pid: 0, notes: [], nid: 0 };
       await this.save();
       return json({ ok: true });
     }
