@@ -576,6 +576,98 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
 .colCrew .chat{height:420px}
 .colCrew #wb{height:300px}
 .sect{align-items:center}
+
+/* ================= ONE PALETTE, THE HOMEPAGE'S =================
+   Paper on grey. Black ink. Orange only for the heading accent, the
+   handwriting, and an urgent pin. Violet only for a pin. Nothing else
+   gets a colour, because on the homepage nothing else does. */
+
+/* the primary button is ink with an orange offset, exactly like OPEN THE BOARD */
+.opensite{background:var(--ink);border:2px solid var(--ink);color:var(--paper);
+  box-shadow:4px 4px 0 rgba(255,107,26,.9)}
+.opensite:hover{background:#B23A00;border-color:#B23A00;box-shadow:4px 4px 0 rgba(13,16,21,.55)}
+.opensite .u{color:var(--paper);opacity:.8}
+
+/* lane placards are paper, like every other card */
+.pl{background:var(--paper);border:0;box-shadow:3px 4px 0 rgba(25,26,23,.42);padding:14px 13px 13px}
+.pl .pn{color:var(--ink)}
+.pl .pc{color:#3A4048}
+.pl .claim{color:#7A3007}
+.pl .hole{display:none}
+.pl::after{content:"";position:absolute;top:-6px;left:20px;width:11px;height:11px;border-radius:50%;
+  background:#5B3FA8;border:1px solid #38246E;box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.45)}
+.pl.gap{background:var(--paper);border:0}
+.pl.gap::after{background:#FF6B1A;border-color:#8A3708}
+.pl.gap .pn{color:var(--ink)}
+.pl.gap .pc{color:#7A3007}
+.pl.held{border:0}
+.pl.held .pn{color:var(--ink)}
+.pl.mine{box-shadow:3px 4px 0 rgba(255,107,26,.75)}
+.pl.mine .pn{color:var(--ink)}
+.pl:hover{background:var(--paper);border:0;box-shadow:4px 6px 0 rgba(25,26,23,.5);transform:translateY(-2px)}
+.pl:hover .pn{color:var(--ink)}
+.pl:hover .claim{color:#B23A00}
+.pl .wf{background:rgba(13,16,21,.07);border:1px solid rgba(13,16,21,.25)}
+.pl .wf.me{background:rgba(255,107,26,.16);border-color:#C24A00}
+
+/* the pull-request and red-team doors are paper, same as the other three */
+.door.pr,.door.pr.sweepdoor{background:var(--paper);color:var(--ink);border:0;
+  box-shadow:3px 4px 0 rgba(25,26,23,.42);transform:rotate(-.3deg)}
+.door.pr::after{content:"";display:block;position:absolute;top:-6px;left:20px;width:11px;height:11px;
+  border-radius:50%;background:#5B3FA8;border:1px solid #38246E;box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.45)}
+.door.pr.sweepdoor::after{background:#FF6B1A;border-color:#8A3708}
+.door.pr .dt,.door.pr.sweepdoor .dt{color:var(--ink)}
+.door.pr .dd,.door.pr.sweepdoor .dd{color:#1A1E24}
+.door.pr:hover,.door.pr.sweepdoor:hover{background:var(--paper);border:0;
+  box-shadow:4px 6px 0 rgba(255,107,26,.6);transform:translateY(-2px) rotate(0deg)}
+.door.pr:hover .dt,.door.pr.sweepdoor:hover .dt{color:#B23A00}
+
+/* the reviewer note is paper with a violet pin, not a violet box */
+.botcard{background:var(--paper);border:0;box-shadow:3px 4px 0 rgba(25,26,23,.42);
+  padding:15px 15px 14px;position:relative;transform:rotate(.4deg)}
+.botcard::after{content:"";position:absolute;top:-6px;left:20px;width:11px;height:11px;border-radius:50%;
+  background:#5B3FA8;border:1px solid #38246E;box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.45)}
+.botcard .bh{color:var(--ink)}
+.botcard p{color:#1A1E24}
+
+/* chat, activity and the whiteboard sit on paper too */
+.chat{background:var(--paper);border:0;box-shadow:3px 4px 0 rgba(25,26,23,.42)}
+.clog .m .nm{color:#3A4048}
+.clog .m .bd{color:var(--ink)}
+.m.sys .bd{color:#4A505A}
+.m.find .nm{color:#B23A00}
+.m.find .bd{color:#2C3037}
+.m.bot .nm{color:#5B3FA8}
+.m.bot .bd{color:#2C3037;border-left:2px solid rgba(91,63,168,.45)}
+.cbar{border-top:1px dashed rgba(13,16,21,.28)}
+.cbar input{color:var(--ink)}
+.cbar input::placeholder{color:rgba(13,16,21,.45)}
+.cbar button{border-left:1px dashed rgba(13,16,21,.28);color:#2C3037}
+.cbar button:hover{color:#B23A00}
+.acts{background:var(--paper);border:0;box-shadow:3px 4px 0 rgba(25,26,23,.42)}
+.ar{border-bottom:1px dashed rgba(13,16,21,.16)}
+.ar .who2{color:var(--ink)}
+.ar .what{color:#1A1E24}
+.ar .dot2{background:#8E8E88}
+.ar.find .dot2{background:#FF6B1A}
+.ar.bot .dot2{background:#5B3FA8}
+.ar.sys .dot2{background:#9A9A94}
+#wb{background:var(--paper);border:0;box-shadow:3px 4px 0 rgba(25,26,23,.42)}
+
+/* tabs read as paper tabs */
+.tabs button{background:var(--paper);border:0;color:#2C3037;box-shadow:2px 3px 0 rgba(25,26,23,.35)}
+.tabs button:hover{color:var(--ink);box-shadow:3px 4px 0 rgba(25,26,23,.45)}
+.tabs button.on{color:var(--ink);box-shadow:2px 3px 0 rgba(255,107,26,.85)}
+.tabs button.on .n{color:#B23A00}
+
+/* the lane source line and ghosts */
+.lanesrc button{background:var(--paper);border:0;box-shadow:2px 3px 0 rgba(25,26,23,.35);color:#2C3037}
+.lanesrc button:hover{color:#B23A00}
+button.ghost{background:var(--paper);border:0;box-shadow:2px 3px 0 rgba(25,26,23,.35);color:#2C3037}
+button.ghost:hover{color:#B23A00;box-shadow:3px 4px 0 rgba(25,26,23,.45)}
+.railhead .dark{color:#B23A00}
+.railhead .dark.allin{color:var(--ink)}
+.flash{color:#7A3007}
 </style>
 
 <canvas id="field"></canvas>
