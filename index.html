@@ -111,9 +111,9 @@ button.ghost:hover{color:var(--chalk);border-color:var(--dust)}
 .lanesrc button{font-family:"Space Mono",monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
   padding:5px 9px;background:rgba(255,255,255,.4);border:1px solid var(--faint);color:#0A0B09;cursor:pointer;font-weight:700}
 .lanesrc button:hover{border-color:#C24A00;color:#C24A00}
-.rail{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:0 auto 24px;max-width:932px}
+.rail{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:0 0 14px;max-width:940px}
 .rail .pl{width:100%}
-@media(max-width:1000px){.rail{grid-template-columns:repeat(3,minmax(0,1fr));max-width:576px}}
+@media(max-width:820px){.rail{grid-template-columns:repeat(3,minmax(0,1fr));max-width:none}}
 @media(max-width:560px){.rail{grid-template-columns:repeat(2,minmax(0,1fr));max-width:none}}
 .pl{position:relative;text-align:left;padding:11px 10px 12px;cursor:pointer;background:rgba(255,255,255,.28);font-family:inherit;
   border:1px solid var(--faint);color:var(--dust)}
@@ -562,15 +562,31 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
 .pin.bot::after{background:var(--violet);border-color:#2A1F49}
 .pin.bot .kn::after{content:" \00B7 auto";color:#5B3FA8}
 
-/* ---- three columns: the board, the form, the crew ---- */
-.deck{display:grid;grid-template-columns:minmax(0,1fr) 360px 380px;gap:22px;align-items:start}
-@media(max-width:1280px){.deck{grid-template-columns:minmax(0,1fr) 340px}
-  .deck .colCrew{grid-column:1 / -1}}
-@media(max-width:900px){.deck{grid-template-columns:minmax(0,1fr)}
-  .deck .colCrew{grid-column:auto}}
-.deck.slim{grid-template-columns:minmax(0,1fr) 360px 380px;max-width:none;margin:0}
-@media(max-width:1280px){.deck.slim{grid-template-columns:minmax(0,1fr) 340px}}
-@media(max-width:900px){.deck.slim{grid-template-columns:minmax(0,1fr)}}
+/* ---- the run of the page: 1|2 across the top, 3 wide, then 4|5 ----
+   Each step is a thing you actually do, in the order you do it, so nobody
+   has to hunt for where the next move lives. ---- */
+.stephead{display:flex;align-items:center;gap:11px;font-family:Anton,sans-serif;
+  font-size:27px;text-transform:uppercase;letter-spacing:.02em;line-height:1;color:var(--chalk);
+  margin:0 0 9px;padding-bottom:9px;border-bottom:1px dashed rgba(10,11,9,.3)}
+.stephead .sn{flex:none;width:27px;height:27px;border-radius:50%;background:var(--orangefill);
+  color:#2A1204;font-family:"Space Mono",monospace;font-size:13px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;box-shadow:1.5px 2px 0 rgba(25,26,23,.4)}
+.stephead .stepn{font-family:Anton,sans-serif;font-size:27px;font-weight:400;color:var(--orange)}
+.stephead .stepx{margin-left:auto;font-family:"Space Mono",monospace;font-size:10.5px;
+  letter-spacing:.16em;text-transform:uppercase;color:#0A0B09;font-weight:700;text-align:right}
+.stephead.wide{margin-top:34px}
+.stepsub{font-size:13.5px;line-height:1.6;color:#131410;max-width:80ch;margin:0 0 13px}
+.stepsub b{color:var(--chalk);font-weight:700}
+
+.flow2{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:26px;align-items:start}
+@media(max-width:1180px){.flow2{grid-template-columns:minmax(0,1fr)}}
+.doors.two{grid-template-columns:1fr 1fr}
+@media(max-width:900px){.doors.two{grid-template-columns:1fr}}
+
+.deck{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:26px;align-items:start;margin-top:34px}
+@media(max-width:1000px){.deck{grid-template-columns:minmax(0,1fr)}}
+.deck.slim{grid-template-columns:minmax(0,1fr) 400px;max-width:none;margin:34px 0 0}
+@media(max-width:1000px){.deck.slim{grid-template-columns:minmax(0,1fr)}}
 .colBoard .board{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
 .colCrew .chat,.colCrew .acts{height:auto;max-height:420px}
 .colCrew .chat{height:420px}
@@ -726,6 +742,16 @@ button.ghost:hover{color:#B23A00;box-shadow:3px 4px 0 rgba(25,26,23,.45)}
   border:1px solid rgba(13,16,21,.4);color:var(--ink)}
 .ac .ab button:hover{border-color:#B23A00;color:#B23A00}
 .boardclear{font-family:Kalam,cursive;font-size:17px;color:#131410;text-align:center;padding:26px 10px}
+/* the file sheet lost its own heading to the step marker above it */
+.colFile .sheet.hot{padding-top:15px}
+.colFile .brief2{margin-bottom:13px}
+/* the crew sidebar tracks the file column's width */
+.colCrew .chat,.colCrew .acts{height:auto;max-height:400px}
+.colCrew .chat{height:400px}
+.colCrew #wb{height:290px}
+/* the flash confirmation sits under the lanes, where the click happened */
+.colLanes .flash{margin:0}
+.stephead .stepx.allin{color:var(--violet)}
 </style>
 
 <canvas id="field"></canvas>
@@ -814,50 +840,59 @@ button.ghost:hover{color:#B23A00;box-shadow:3px 4px 0 rgba(25,26,23,.45)}
     <button class="ghost" id="switchCancel">never mind</button>
   </div>
 
-  <div class="railhead">
-    <span class="dark" id="darkN">-</span>
-    <span class="sub">tap a lane to take it</span>
-  </div>
-  <div class="railwhat">A <b>lane</b> is one way of attacking the site. You only work yours, so between you the whole thing gets covered instead of four people poking the same button. Dashed and orange means <b>nobody has been there yet</b>.</div>
-  <div class="lanesrc" id="laneSrc"></div>
-  <div class="rail" id="rail"></div>
-  <div class="flash" id="flash"></div>
+  <!-- ===== 1 and 2 run side by side: take a lane, file what it gives you ===== -->
+  <div class="flow2">
 
-  <div class="doors">
-    <button class="door" data-door="bug"><div class="dt">report a bug</div>
-      <div class="dd">Something is broken. Say what happened and how to make it happen again.</div></button>
-    <button class="door" data-door="feature"><div class="dt">suggest a feature</div>
-      <div class="dd">Not broken, missing. The thing that should obviously exist.</div></button>
-    <button class="door" data-door="design"><div class="dt">submit feedback</div>
-      <div class="dd">Colour, contrast, wording, layout. What is ugly or unreadable.</div></button>
+    <div class="col colLanes">
+      <div class="stephead"><span class="sn">1</span>claim a lane
+        <span class="stepx" id="darkN">-</span></div>
+      <div class="stepsub">A <b>lane</b> is one way of attacking the site. You only work yours, so between you the whole thing gets covered instead of four people poking the same button. Dashed and orange means <b>nobody has been there yet</b>.</div>
+      <div class="lanesrc" id="laneSrc"></div>
+      <div class="rail" id="rail"></div>
+      <div class="flash" id="flash"></div>
+    </div>
+
+    <div class="col colFile">
+      <div class="stephead"><span class="sn">2</span>file a finding</div>
+      <div class="stepsub">Anything you found, in your own words.</div>
+      <div class="sheet brief2 t1" id="brief"></div>
+      <div class="sheet hot t2">
+        <div class="sl" style="margin-top:2px">what kind</div>
+        <div class="kindpick paper" id="kindPick"></div>
+        <div class="hint2" id="kindHint"></div>
+        <div class="sl">what happened</div>
+        <textarea class="p" id="fText" maxlength="300" placeholder="in plain words - a short sentence is perfect"></textarea>
+        <div class="cnt" id="fCount">Needs a few words so we can spot duplicates.</div>
+        <div id="extra"></div>
+        <div class="sl">how bad</div>
+        <div class="sevpick paper" id="sevPick"></div>
+        <button class="stamp sm" id="fileIt">pin it to the board</button>
+        <div class="er2" id="e1"></div>
+        <div id="gate"></div>
+      </div>
+    </div>
+
   </div>
-  <div class="doors" style="grid-template-columns:1fr">
+
+  <!-- ===== 3: the two things a person cannot do by hand ===== -->
+  <div class="stephead wide"><span class="sn">3</span>bring in the machines</div>
+  <div class="stepsub">Pull the site's real source and patch it, or let the AI run the standard red-team pass for you.</div>
+  <div class="doors two">
     <button class="door pr" data-door="pull"><div class="dt">&lt;/&gt; open a pull request</div>
       <div class="dd">Pull the live source of the site, edit it here, and submit the diff. The reviewer reads every patch automatically.</div></button>
-  </div>
-  <div class="doors" style="grid-template-columns:1fr">
     <button class="door pr sweepdoor" id="sweep"><div class="dt">&#9889; red team with AI</div>
       <div class="dd" id="sweepNote">Fetches the live page and runs the standard pass: security headers, clickjacking, mixed content, tab-nabbing, viewport, alt text, password-over-GET. Real findings, pinned straight to the board.</div></button>
   </div>
+  <div id="prbench"></div>
 
   <div class="deck">
 
     <div class="col colBoard">
-      <div id="prbench"></div>
-      <div class="sect">the board <b id="wallN">0</b> <span style="margin-left:auto" id="wallBreak"></span></div>
+      <div class="stephead"><span class="sn">4</span>the board
+        <b class="stepn" id="wallN">0</b><span class="stepx" id="wallBreak"></span></div>
+      <div class="stepsub">Everything the crew has turned up, live. File a duplicate and it stops you and shows you theirs.</div>
       <div class="board" id="board"></div>
       <div id="boardEmpty">
-        <div class="steps">
-          <div class="step"><div class="num">1</div><div class="sh">open the site</div>
-            <p>Hit the violet button up top. It opens in <b>your own tab</b> - keep this board in the other one.</p>
-            <span class="hw">both tabs, side by side</span></div>
-          <div class="step"><div class="num">2</div><div class="sh">claim a lane</div>
-            <p>Tap any lane above to put your name on it. <b>Only test that one.</b> Everyone else takes a different one, which is how the whole site gets covered.</p>
-            <span class="hw">the crew sees who has what</span></div>
-          <div class="step"><div class="num">3</div><div class="sh">pin what you find</div>
-            <p>Bug, feature idea, colour change, or real code. If someone already found it, we <b>stop you and show you theirs</b>.</p>
-            <span class="hw">it all lands here &#8600;</span></div>
-        </div>
         <div class="empty">Nothing pinned yet. Go break something.</div>
       </div>
       <div class="boardclear" id="boardClear" style="display:none">Board's clear. Everything filed has been shipped or shut &#8211; it's all in the archive down the bottom.</div>
@@ -866,8 +901,6 @@ button.ghost:hover{color:#B23A00;box-shadow:3px 4px 0 rgba(25,26,23,.45)}
     <div class="col colFile">
       <div class="sheet brief2 t1" id="brief"></div>
       <div class="sheet hot t2">
-        <div class="sh2">file <em>a finding</em></div>
-        <div class="ss2">anything you found, in your own words</div>
         <div class="sl" style="margin-top:16px">what kind</div>
         <div class="kindpick paper" id="kindPick"></div>
         <div class="hint2" id="kindHint"></div>
@@ -884,12 +917,13 @@ button.ghost:hover{color:#B23A00;box-shadow:3px 4px 0 rgba(25,26,23,.45)}
     </div>
 
     <div class="col colCrew">
+      <div class="stephead"><span class="sn">5</span>the crew</div>
+      <div class="stepsub">Who is here, what they hold, and the room's chat.</div>
       <div class="botcard">
         <div class="bh">the reviewer</div>
         <p>An AI that <b>reads code</b>. Submit a PATCH and it reviews the diff automatically. Say <b>@bot</b> in chat, or hit <b>ask reviewer</b> on any finding.</p>
       </div>
 
-      <div class="sect">the crew</div>
       <div class="crew" id="crew"></div>
       <div class="profile" id="profile"></div>
 
@@ -1274,7 +1308,7 @@ function drawRail(){
   }).join("");
   if($("rail").dataset.k!==h){$("rail").innerHTML=h;$("rail").dataset.k=h;}
   $("darkN").textContent=gaps?(gaps+(gaps===1?" lane still dark":" lanes still dark")):"every lane has been touched";
-  $("darkN").className=gaps?"dark":"dark allin";
+  $("darkN").className=gaps?"stepx":"stepx allin";
 }
 $("rail").addEventListener("click",function(e){
   var b=e.target.closest("[data-l]");if(!b||DEMO)return;
@@ -1676,7 +1710,7 @@ $("demo").addEventListener("click",function(){
 });
 
 
-/* ---- the three doors ---- */
+/* ---- the doors: only the pull-request one is left, the kinds live in the form ---- */
 document.addEventListener("click",function(e){
   var d=e.target.closest("[data-door]");if(!d)return;
   var k=d.dataset.door;
