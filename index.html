@@ -955,11 +955,13 @@ function normTarget(u){
     .replace(/^https?:\/\//,"").replace(/^www\./,"").replace(/[\/?#]+$/,"");
 }
 function codeFor(u){
-  var t=normTarget(u); if(!t)return "";
-  var host=t.split("/")[0];
+  /* keyed on the HOST, not the full path: a crew thrashing a site is one crew,
+     whether the person was handed the homepage or a deep link. Which page they
+     start on is the target, and the switcher moves everyone together. */
+  var host=normTarget(u).split("/")[0]; if(!host)return "";
   var lab=(host.split(".")[0]||"site").replace(/[^a-z0-9]/g,"").toUpperCase().slice(0,6)||"SITE";
   var x=2166136261;
-  for(var i=0;i<t.length;i++){x^=t.charCodeAt(i);x=(x*16777619)>>>0;}
+  for(var i=0;i<host.length;i++){x^=host.charCodeAt(i);x=(x*16777619)>>>0;}
   return lab+("00"+x.toString(36).toUpperCase()).slice(-3);
 }
 var CUSTOM=false,ROLLED=newCode();
