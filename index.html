@@ -752,6 +752,11 @@ button.ghost:hover{color:#B23A00;box-shadow:3px 4px 0 rgba(25,26,23,.45)}
 /* the flash confirmation sits under the lanes, where the click happened */
 .colLanes .flash{margin:0}
 .stephead .stepx.allin{color:var(--violet)}
+.mdbtn{margin-left:12px;flex:none;font-family:"Space Mono",monospace;font-size:9.5px;letter-spacing:.14em;
+  text-transform:uppercase;font-weight:700;padding:6px 10px;cursor:pointer;background:transparent;
+  border:1px solid var(--faint);color:#0A0B09}
+.mdbtn:hover{border-color:#B23A00;color:#B23A00;background:rgba(255,255,255,.45)}
+.mdbtn:active{background:var(--paper)}
 </style>
 
 <canvas id="field"></canvas>
@@ -889,7 +894,8 @@ button.ghost:hover{color:#B23A00;box-shadow:3px 4px 0 rgba(25,26,23,.45)}
 
     <div class="col colBoard">
       <div class="stephead"><span class="sn">4</span>the board
-        <b class="stepn" id="wallN">0</b><span class="stepx" id="wallBreak"></span></div>
+        <b class="stepn" id="wallN">0</b><span class="stepx" id="wallBreak"></span>
+        <button class="mdbtn" id="mdOut" title="download the whole session as markdown">export .md</button></div>
       <div class="stepsub">Everything the crew has turned up, live. File a duplicate and it stops you and shows you theirs.</div>
       <div class="board" id="board"></div>
       <div id="boardEmpty">
@@ -1691,6 +1697,110 @@ $("demo").addEventListener("click",function(){
   window.scrollTo(0,0);
 });
 
+
+/* ---- export: the whole session as one markdown file ----
+   Everything the room produced, in the order a person would want to read it
+   back: what we hit, who was on it, what is still open, what got shipped.
+   Built from the same state the board renders, so it cannot drift from it. */
+function mdReport(){
+  var st=LAST||{},fs=st.finds||[],ps=st.players||[];
+  var host=(st.target||"the site").replace(/^https?:\/\//,"").replace(/\/$/,"");
+  var when=new Date().toISOString().replace("T"," ").slice(0,16)+" UTC";
+  var L=function(id){var l=(LANES||[]).filter(function(x){return x.id===id;})[0];return l?l.label:(id||"-");};
+  var K=function(k){return ((KINDS||{})[k]||{}).label||k||"finding";};
+  var out=[];
+  out.push("# Dogpile - "+host);
+  out.push("");
+  out.push("| | |");
+  out.push("|---|---|");
+  out.push("| Target | "+(st.target||"none set")+" |");
+  out.push("| Room | `"+(ME.room||"-")+"` |");
+  out.push("| Crew | "+ps.length+" |");
+  out.push("| Findings | "+fs.length+" |");
+  out.push("| Exported | "+when+" |");
+  out.push("");
+
+  out.push("## The crew");
+  out.push("");
+  if(!ps.length)out.push("_Nobody in the room._");
+  ps.forEach(function(p){
+    var mine=fs.filter(function(f){return f.by===p.name;});
+    out.push("- **"+p.name+"** - "+L(p.lane)+" - "+mine.length+
+      (mine.length===1?" finding":" findings")+
+      (p.gh?(" - [@"+p.gh.login+"]("+p.gh.url+")"):""));
+  });
+  out.push("");
+
+  out.push("## Coverage");
+  out.push("");
+  out.push("| Lane | Held by | Findings |");
+  out.push("|---|---|---|");
+  var cov=st.coverage||{};
+  (LANES||[]).forEach(function(l){
+    var c=cov[l.id]||{},held=ps.filter(function(p){return p.lane===l.id;}).map(function(p){return p.name;});
+    out.push("| "+l.label+" | "+(held.length?held.join(", "):"_nobody_")+" | "+(c.finds||0)+" |");
+  });
+  out.push("");
+
+  var block=function(title,list,note){
+    out.push("## "+title+" ("+list.length+")");
+    out.push("");
+    if(note)  { out.push("_"+note+"_"); out.push(""); }
+    if(!list.length){out.push("_Nothing here._");out.push("");return;}
+    list.forEach(function(f){
+      out.push("### #"+f.id+" - "+K(f.kind)+" - "+String(f.sev||"").toUpperCase()+" - "+L(f.lane));
+      out.push("");
+      out.push(f.text);
+      out.push("");
+      if(f.steps){out.push("**How to see it:** "+f.steps);out.push("");}
+      if(f.color){out.push("**Colour:** `"+f.color+"`");out.push("");}
+      if(f.code){out.push("```diff");out.push(String(f.code).replace(/```/g,"~~~"));out.push("```");out.push("");}
+      out.push("Found by **"+f.by+"**"+((f.plus||[]).length?(" - backed by "+f.plus.join(", ")):"")+
+        (f.bot?" - _found by the AI sweep_":""));
+      out.push("");
+      (f.replies||[]).forEach(function(r){
+        out.push("> **"+r.by+(r.bot?" (reviewer)":"")+":** "+String(r.text).replace(/\n/g," "));
+        out.push(">");
+      });
+      if((f.replies||[]).length)out.push("");
+    });
+  };
+
+  block("Still open",fs.filter(function(f){return f.status==="open";}),"These are the ones nobody has dealt with yet.");
+  block("Shipped",fs.filter(function(f){return f.status==="merged";}),"Fixed, and the room agreed it was fixed.");
+  block("Called not-a-bug",fs.filter(function(f){return f.status==="closed";}),"Looked at and deliberately closed.");
+
+  var plan=st.plan||[];
+  out.push("## What the crew agreed to do ("+plan.length+")");
+  out.push("");
+  if(!plan.length)out.push("_Nothing written down._");
+  plan.forEach(function(p){out.push("- ["+(p.done?"x":" ")+"] "+p.text+(p.by?(" _("+p.by+")_"):""));});
+  out.push("");
+
+  var notes=st.notes||[];
+  if(notes.length){
+    out.push("## Sticky notes");
+    out.push("");
+    notes.forEach(function(n){out.push("- "+String(n.text).replace(/\n/g," ")+(n.by?(" _- "+n.by+"_"):""));});
+    out.push("");
+  }
+
+  out.push("---");
+  out.push("");
+  out.push("Thrashed together on [Dogpile](https://aunysillyme.github.io/dogpile/).");
+  out.push("");
+  return {name:"dogpile-"+(host.replace(/[^a-z0-9.-]/gi,"-").slice(0,40)||"session")+"-"+
+    new Date().toISOString().slice(0,10)+".md", body:out.join("\n")};
+}
+document.addEventListener("click",function(e){
+  var b=e.target.closest("#mdOut");if(!b)return;
+  var r=mdReport();
+  var url=URL.createObjectURL(new Blob([r.body],{type:"text/markdown;charset=utf-8"}));
+  var a=document.createElement("a");a.href=url;a.download=r.name;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url);},4000);
+  b.textContent="saved";setTimeout(function(){b.textContent="export .md";},1800);
+});
 
 /* ---- the doors: only the pull-request one is left, the kinds live in the form ---- */
 document.addEventListener("click",function(e){
