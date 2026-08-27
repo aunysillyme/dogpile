@@ -39,7 +39,7 @@ body{color:var(--chalk);font-family:"Space Mono",ui-monospace,Menlo,monospace;fo
 .wrap{position:relative;z-index:2;min-height:100vh}
 .screen{display:none}.screen.on{display:block}
 .solo{max-width:640px;margin:0 auto;padding:30px 20px 90px}
-.hall{max-width:1240px;margin:0 auto;padding:20px 18px 100px}
+.hall{max-width:1620px;margin:0 auto;padding:20px 18px 100px}
 
 /* masthead */
 .mast{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}
@@ -96,7 +96,9 @@ button.ghost:hover{color:var(--chalk);border-color:var(--dust)}
 .pl .claim{font-family:Kalam,cursive;font-weight:700;font-size:13px;color:#6B6C65;margin-top:5px}
 .pl:hover .claim{color:#B23A00}
 .pl.mine .claim{color:#8A3708}
-.rail{display:grid;grid-template-columns:repeat(auto-fit,minmax(122px,1fr));gap:8px;margin-bottom:24px}
+.rail{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:24px}
+.rail .pl{flex:1 1 132px;max-width:210px}
+@media(max-width:560px){.rail .pl{flex:1 1 46%;max-width:none}}
 @media(max-width:560px){.rail{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .pl{position:relative;text-align:left;padding:11px 10px 12px;cursor:pointer;background:rgba(255,255,255,.28);font-family:inherit;
   border:1px solid var(--faint);color:var(--dust)}
@@ -131,7 +133,7 @@ button.ghost:hover{color:var(--chalk);border-color:var(--dust)}
 @media(max-width:1000px){.deck{grid-template-columns:minmax(0,1fr)}}
 /* on a wide screen the side rail stops being a tower and sits two across */
 @media(min-width:1500px){
-  .hall{max-width:1560px}
+  
   .deck{grid-template-columns:minmax(0,1fr) 760px}
   .deck .col.rail2{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
   .deck.slim{grid-template-columns:minmax(0,1fr);max-width:1060px}
@@ -536,6 +538,21 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
 .sweepnote{font-size:11px;color:var(--dust);line-height:1.5;margin-top:8px}
 .pin.bot::after{background:var(--violet);border-color:#2A1F49}
 .pin.bot .kn::after{content:" \00B7 auto";color:#5B3FA8}
+
+/* ---- three columns: the board, the form, the crew ---- */
+.deck{display:grid;grid-template-columns:minmax(0,1fr) 360px 380px;gap:22px;align-items:start}
+@media(max-width:1280px){.deck{grid-template-columns:minmax(0,1fr) 340px}
+  .deck .colCrew{grid-column:1 / -1}}
+@media(max-width:900px){.deck{grid-template-columns:minmax(0,1fr)}
+  .deck .colCrew{grid-column:auto}}
+.deck.slim{grid-template-columns:minmax(0,1fr) 360px 380px;max-width:none;margin:0}
+@media(max-width:1280px){.deck.slim{grid-template-columns:minmax(0,1fr) 340px}}
+@media(max-width:900px){.deck.slim{grid-template-columns:minmax(0,1fr)}}
+.colBoard .board{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.colCrew .chat,.colCrew .acts{height:auto;max-height:420px}
+.colCrew .chat{height:420px}
+.colCrew #wb{height:300px}
+.sect{align-items:center}
 </style>
 
 <canvas id="field"></canvas>
@@ -642,18 +659,19 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
   </div>
 
   <div class="deck">
-    <div class="col">
+
+    <div class="col colBoard">
       <div id="prbench"></div>
-      <div class="sect">the board <b id="wallN">0</b> <span style="margin-left:auto;color:var(--faint)" id="wallBreak"></span></div>
+      <div class="sect">the board <b id="wallN">0</b> <span style="margin-left:auto" id="wallBreak"></span></div>
       <div class="board" id="board"></div>
       <div id="boardEmpty">
         <div class="steps">
           <div class="step"><div class="num">1</div><div class="sh">open the site</div>
             <p>Hit the violet button up top. It opens in <b>your own tab</b> - keep this board in the other one.</p>
             <span class="hw">both tabs, side by side</span></div>
-          <div class="step"><div class="num">2</div><div class="sh">work your lane</div>
-            <p>Your lane is on the right in orange. <b>Only test that.</b> Everyone else has a different one, which is how the whole site gets covered.</p>
-            <span class="hw">tap any lane to swap</span></div>
+          <div class="step"><div class="num">2</div><div class="sh">claim a lane</div>
+            <p>Tap any lane above to put your name on it. <b>Only test that one.</b> Everyone else takes a different one, which is how the whole site gets covered.</p>
+            <span class="hw">the crew sees who has what</span></div>
           <div class="step"><div class="num">3</div><div class="sh">pin what you find</div>
             <p>Bug, feature idea, colour change, or real code. If someone already found it, we <b>stop you and show you theirs</b>.</p>
             <span class="hw">it all lands here &#8600;</span></div>
@@ -662,15 +680,8 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
       </div>
     </div>
 
-    <div class="col rail2">
+    <div class="col colFile">
       <div class="sheet brief2 t1" id="brief"></div>
-      <div class="crew span2" id="crew"></div>
-
-      <div class="botcard">
-        <div class="bh">the reviewer</div>
-        <p>An AI that <b>reads code</b>. Submit a PATCH and it reviews the diff automatically. Say <b>@bot</b> in chat, or hit <b>ask reviewer</b> on any finding.</p>
-      </div>
-
       <div class="sheet hot t2">
         <div class="sh2">file <em>a finding</em></div>
         <div class="ss2">anything you found, in your own words</div>
@@ -686,17 +697,19 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
         <div class="er2" id="e1"></div>
         <div id="gate"></div>
       </div>
+    </div>
 
-      <div class="sect span2" style="margin-top:6px">the crew</div>
-      <div class="tabs span2" id="tabs"></div>
-      <div class="pane span2" id="pane-board">
-        <canvas id="wb" width="760" height="680"></canvas>
-        <div class="wbbar" id="wbbar"></div>
+    <div class="col colCrew">
+      <div class="botcard">
+        <div class="bh">the reviewer</div>
+        <p>An AI that <b>reads code</b>. Submit a PATCH and it reviews the diff automatically. Say <b>@bot</b> in chat, or hit <b>ask reviewer</b> on any finding.</p>
       </div>
-      <div class="pane span2" id="pane-act">
-        <div class="acts" id="acts"></div>
-      </div>
-      <div class="pane span2" id="pane-notes">
+
+      <div class="sect">the crew</div>
+      <div class="crew" id="crew"></div>
+      <div class="tabs" id="tabs"></div>
+      <div class="pane" id="pane-act"><div class="acts" id="acts"></div></div>
+      <div class="pane" id="pane-notes">
         <div class="stickies" id="stickies"></div>
         <div class="stickybar">
           <div class="cpick" id="cpick"></div>
@@ -704,9 +717,13 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
           <button class="ghost" id="nadd">pin</button>
         </div>
       </div>
-      <div class="pane span2" id="pane-plan">
+      <div class="pane" id="pane-board">
+        <canvas id="wb" width="760" height="680"></canvas>
+        <div class="wbbar" id="wbbar"></div>
+      </div>
+      <div class="pane" id="pane-plan">
         <div class="plan paper">
-          <div class="sl" style="font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--inkdim);margin-bottom:10px">what we're actually going to do</div>
+          <div class="sl" style="margin-bottom:10px">what we're actually going to do</div>
           <div id="planList"></div>
           <div class="planbar">
             <input id="pin_" maxlength="200" placeholder="add something the crew agreed on" autocomplete="off">
@@ -714,7 +731,7 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
           </div>
         </div>
       </div>
-      <div class="pane on span2" id="pane-chat">
+      <div class="pane on" id="pane-chat">
         <div class="chat">
           <div class="clog" id="clog"></div>
           <div class="cbar">
@@ -724,10 +741,8 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
         </div>
       </div>
     </div>
-  </div>
-</div>
 
-</div>
+  </div>
 <script>
 var API="https://dogpile-room.aunysillyme.workers.dev";
 var $=function(i){return document.getElementById(i);};
@@ -1006,7 +1021,7 @@ function drawBoard(){
   $("wallN").textContent=fs.length;
   $("boardEmpty").style.display=fs.length?"none":"block";
   var dk=document.querySelector(".deck");
-  if(dk)dk.className="deck"+(fs.length?"":" slim");
+  if(dk)dk.className="deck";
   var open=fs.filter(function(f){return f.status==="open";}).length;
   $("wallBreak").textContent=fs.length?(open+" open"):"";
   var h=fs.map(function(f){
