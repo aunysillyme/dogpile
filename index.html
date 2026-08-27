@@ -668,6 +668,34 @@ button.ghost:hover{color:#B23A00;box-shadow:3px 4px 0 rgba(25,26,23,.45)}
 .railhead .dark{color:#B23A00}
 .railhead .dark.allin{color:var(--ink)}
 .flash{color:#7A3007}
+/* ---- profiles ---- */
+.crew .pf{cursor:pointer}
+.crew .pf .ava{width:32px;height:32px;border-radius:50%;display:block;object-fit:cover;
+  border:1.5px solid rgba(13,16,21,.35)}
+.crew .pf.sel .ava{border-color:#C24A00;box-shadow:0 0 0 2px rgba(255,107,26,.35)}
+.profile{position:relative;background:var(--paper);color:var(--ink);padding:16px 16px 15px;
+  box-shadow:3px 4px 0 rgba(25,26,23,.42);margin-bottom:14px;display:none;transform:rotate(-.4deg)}
+.profile.on{display:block}
+.profile::after{content:"";position:absolute;top:-6px;left:20px;width:11px;height:11px;border-radius:50%;
+  background:#5B3FA8;border:1px solid #38246E;box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.45)}
+.profile .ph{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.profile .ph img{width:52px;height:52px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(13,16,21,.35);flex:none}
+.profile .pn2{font-family:Anton,sans-serif;font-size:24px;text-transform:uppercase;line-height:1;color:var(--ink)}
+.profile .pg{font-family:"Space Mono",monospace;font-size:11.5px;color:#2C3037;margin-top:3px}
+.profile .pg a{color:#5B3FA8}
+.profile .pbio{font-size:13px;line-height:1.5;color:#1A1E24;margin-bottom:9px}
+.profile .pstats{display:flex;gap:14px;flex-wrap:wrap;border-top:1px dashed rgba(13,16,21,.25);padding-top:9px}
+.profile .pstat{font-family:"Space Mono",monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#3A4048}
+.profile .pstat b{display:block;font-family:Anton,sans-serif;font-size:22px;letter-spacing:.02em;color:var(--ink);line-height:1.05}
+.ghbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:11px;
+  border-top:1px dashed rgba(13,16,21,.25);padding-top:11px}
+.ghbar input{flex:1;min-width:130px;font-family:"Space Mono",monospace;font-size:13px;color:var(--ink);
+  background:transparent;border:0;border-bottom:1.5px dashed rgba(13,16,21,.4);padding:6px 2px;outline:none}
+.ghbar input:focus{border-bottom-color:#B23A00;border-bottom-style:solid}
+.ghbar input::placeholder{color:rgba(13,16,21,.45)}
+.ghnote{font-size:11px;color:#3A4048;line-height:1.5;margin-top:7px}
+.pin .byava{width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:5px;
+  border:1px solid rgba(13,16,21,.3)}
 </style>
 
 <canvas id="field"></canvas>
@@ -831,6 +859,7 @@ button.ghost:hover{color:#B23A00;box-shadow:3px 4px 0 rgba(25,26,23,.45)}
 
       <div class="sect">the crew</div>
       <div class="crew" id="crew"></div>
+      <div class="profile" id="profile"></div>
 
       <div class="sect" style="margin-top:4px">group chat</div>
       <div class="chat">
@@ -1081,7 +1110,7 @@ function paint(d){
   var mine=(d.players||[]).filter(function(p){return p.id===ME.id;})[0];
   if(mine)ME.lane=mine.lane;
   if(d.target)setTarget(d.target);
-  drawRail();drawLaneSrc();drawBrief();drawCrew();drawBoard();drawPlan();drawNotes();drawActs();drawTabs();
+  drawRail();drawLaneSrc();drawBrief();drawCrew();drawProfile();drawBoard();drawPlan();drawNotes();drawActs();drawTabs();
   if(d.strokes&&d.sid!==SIDS){SIDS=d.sid;drawWB(d.strokes);}
   if(d.msgs&&d.msgs.length){
     var log=$("clog"),near=(log.scrollHeight-log.scrollTop-log.clientHeight)<90;
@@ -1188,6 +1217,72 @@ $("brief").addEventListener("click",function(e){
   var b=e.target.closest("[data-l]");if(!b||DEMO)return;
   post("relane",{id:ME.id,lane:b.dataset.l}).then(function(){pull();});
 });
+var SEL=null;
+function ghAvatar(p,size){
+  if(p&&p.gh&&p.gh.avatar) return '<img class="ava" src="'+esc(p.gh.avatar)+'" alt="" width="'+size+'" height="'+size+'">';
+  return avatar(p?p.av:0,size);
+}
+function drawProfile(){
+  var el=$("profile");if(!el)return;
+  var p=(LAST.players||[]).filter(function(q){return q.id===SEL;})[0];
+  if(!p){el.className="profile";el.innerHTML="";return;}
+  el.className="profile on";
+  var mine=p.id===ME.id;
+  var g=p.gh;
+  var L=LANES.filter(function(l){return l.id===p.lane;})[0];
+  var pinned=(LAST.finds||[]).filter(function(f){return f.by===p.name;});
+  var plus=pinned.reduce(function(a,f){return a+(f.plus||[]).length;},0);
+  var shipped=pinned.filter(function(f){return f.status==="merged";}).length;
+  el.innerHTML=
+    '<div class="ph">'+(g&&g.avatar?'<img src="'+esc(g.avatar)+'" alt="">':avatar(p.av,52))+
+      '<div><div class="pn2">'+esc(p.name)+'</div>'+
+      '<div class="pg">'+(L?esc(L.label):"no lane")+
+        (g?' &middot; <a href="'+esc(g.url)+'" target="_blank" rel="noopener noreferrer">@'+esc(g.login)+'</a>':'')+
+      '</div></div></div>'+
+    (g&&g.bio?'<div class="pbio">'+esc(g.bio)+'</div>':'')+
+    '<div class="pstats">'+
+      '<div class="pstat"><b>'+pinned.length+'</b>pinned</div>'+
+      '<div class="pstat"><b>'+plus+'</b>backed up</div>'+
+      '<div class="pstat"><b>'+shipped+'</b>shipped</div>'+
+      (g?'<div class="pstat"><b>'+g.repos+'</b>repos</div><div class="pstat"><b>'+g.followers+'</b>followers</div>':'')+
+    '</div>'+
+    (mine?'<div class="ghbar"><input id="ghIn" maxlength="39" placeholder="your github handle" value="'+(g?esc(g.login):"")+'" autocomplete="off">'+
+      '<button class="ghost" id="ghGo">'+(g?"update":"connect")+'</button></div>'+
+      '<div class="ghnote" id="ghNote">Pulls your public GitHub name, avatar and bio. It shows who you are; it does not sign you in.</div>':'');
+}
+document.addEventListener("click",function(e){
+  var c=e.target.closest("[data-pid]");
+  if(c){SEL=(SEL===c.dataset.pid)?null:c.dataset.pid;drawCrew();drawProfile();return;}
+  var g=e.target.closest("#ghGo");
+  if(g&&!DEMO){
+    var v=(($("ghIn")||{}).value||"").trim().replace(/^@+/,"").replace(/[^A-Za-z0-9-]/g,"");
+    g.disabled=true;g.textContent="checking...";
+    if(!v){
+      post("github",{id:ME.id,login:""}).then(function(){g.disabled=false;g.textContent="connect";pull();flash("GitHub disconnected.");});
+      return;
+    }
+    /* the browser asks github, not the worker: cloudflare IPs get 403 */
+    fetch("https://api.github.com/users/"+encodeURIComponent(v),{headers:{accept:"application/vnd.github+json"}})
+      .then(function(r){ return r.ok?r.json():(r.status===404?Promise.reject("no github user called "+v):Promise.reject("github is rate limiting, using just the handle")); })
+      .then(function(u){
+        return post("github",{id:ME.id,login:u.login,name:u.name||u.login,bio:u.bio||"",
+          repos:u.public_repos||0,followers:u.followers||0,since:(u.created_at||"").slice(0,4)});
+      })
+      .then(function(r){
+        g.disabled=false;g.textContent="update";
+        if(r&&r.error){$("ghNote").textContent=r.error;return;}
+        pull();flash("Connected as @"+v+".");
+      })
+      .catch(function(err){
+        /* still usable: github.com/<login>.png needs no API at all */
+        post("github",{id:ME.id,login:v}).then(function(r){
+          g.disabled=false;g.textContent="update";
+          if(r&&r.gh){pull();flash("Connected as @"+v+".");}
+          $("ghNote").textContent=(typeof err==="string"?err:"Saved the handle.")+" Avatar still works.";
+        });
+      });
+  }
+});
 function drawCrew(){
   var h='<div class="pf"><svg width="32" height="32" viewBox="0 0 26 26" aria-hidden="true">'+
     '<rect x="3.2" y="6" width="19.6" height="15" fill="none" stroke="#8B5CF6" stroke-width="1.2"/>'+
@@ -1198,8 +1293,8 @@ function drawCrew(){
     '<span style="color:#8B5CF6">REVIEWER</span><span class="ln">reads code</span></div>'+
     (LAST.players||[]).map(function(p){
     var L=LANES.filter(function(l){return l.id===p.lane;})[0];
-    return '<div class="pf'+(p.id===ME.id?" me":"")+'">'+avatar(p.av,32)+
-      '<span>'+esc(p.name)+'</span><span class="ln">'+esc(L?L.label:"")+'</span></div>';
+    return '<div class="pf'+(p.id===ME.id?" me":"")+(p.id===SEL?" sel":"")+'" data-pid="'+esc(p.id)+'" title="see profile">'+
+      ghAvatar(p,32)+'<span>'+esc(p.name)+'</span><span class="ln">'+esc(L?L.label:"")+'</span></div>';
   }).join("");
   if($("crew").dataset.k!==h){$("crew").innerHTML=h;$("crew").dataset.k=h;}
 }
@@ -1236,7 +1331,9 @@ function drawBoard(){
       '<div class="kh">'+glyph(f.kind,26)+'<div><div class="kn">'+esc((KINDS[f.kind]||{}).label||f.kind)+'</div></div>'+
       '<span class="fid">#'+f.id+'</span></div>'+
       '<div class="ft">'+esc(f.text)+'</div>'+body+
-      '<div class="marg"><span class="by">'+esc(f.by)+' &middot; '+esc(f.lane)+'</span>'+
+      '<div class="marg"><span class="by">'+
+        (f.gh&&f.gh.avatar?'<img class="byava" src="'+esc(f.gh.avatar)+'" alt="">':'')+
+        esc(f.by)+' &middot; '+esc(f.lane)+'</span>'+
         '<button class="plus'+(mine?" on":"")+'" data-a="plus">+'+f.plus.length+'</button>'+
         (f.kind==="patch"&&f.code?'<button data-a="copy">copy</button>':'')+
         '<button data-a="ask">ask reviewer</button>'+

@@ -326,7 +326,7 @@ export class Room extends DurableObject {
         laneSrc: s.laneSrc || "",
         kinds: KINDS,
         coverage: this.coverage(),
-        players: s.players.map((p) => ({ id: p.id, name: p.name, lane: p.lane, av: p.av || 0, finds: p.finds || 0 })),
+        players: s.players.map((p) => ({ id: p.id, name: p.name, lane: p.lane, av: p.av || 0, finds: p.finds || 0, gh: p.gh || null })),
         finds: s.finds,
         strokes: s.strokes,
         sid: s.sid,
@@ -411,7 +411,7 @@ export class Room extends DurableObject {
 
       s.fid += 1;
       const find = {
-        id: s.fid, by: p.name, av: p.av, lane: p.lane, text, steps,
+        id: s.fid, by: p.name, av: p.av, gh: p.gh || null, lane: p.lane, text, steps,
         sev, kind, code, color, status: "open", fp, plus: [], dead: false,
         replies: []
       };
@@ -562,6 +562,33 @@ export class Room extends DurableObject {
       else it.done = !it.done;
       await this.save();
       return json({ ok: true, plan: s.plan });
+    }
+
+    /* Connect a real GitHub identity. Public API, no OAuth app needed, so it
+       works the moment you type a handle. It proves the account exists and is
+       public; it does not prove you are that person. */
+    /* The browser does the GitHub lookup - Cloudflare IPs get 403 from the
+       unauthenticated API, and a per-user rate limit is the right one anyway.
+       We store what it hands us, sanitised. It shows who someone is; it does
+       not prove it, which is what a real OAuth app would add. */
+    if (act === "github") {
+      const p = this.p(clean(b.id, 40));
+      if (!p) return json({ error: "not in room" }, 403);
+      const login = clean(b.login, 39).replace(/^@+/, "").replace(/[^A-Za-z0-9-]/g, "");
+      if (!login) { p.gh = null; await this.save(); return json({ ok: true, gh: null }); }
+      p.gh = {
+        login,
+        name: clean(b.name, 60) || login,
+        avatar: "https://github.com/" + login + ".png?size=200",
+        url: "https://github.com/" + login,
+        bio: clean(b.bio, 160),
+        repos: Math.max(0, Math.min(99999, Number(b.repos) || 0)),
+        followers: Math.max(0, Math.min(9999999, Number(b.followers) || 0)),
+        since: clean(b.since, 4)
+      };
+      this.push("SYS", p.name + " connected github/" + login, "sys");
+      await this.save();
+      return json({ ok: true, gh: p.gh });
     }
 
     if (act === "relanes") {
