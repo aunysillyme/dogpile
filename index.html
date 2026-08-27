@@ -1,0 +1,835 @@
+<title>Dogpile</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Group red-teaming that stops the pile-on. Everyone gets a different lane, nobody files the same bug twice, and the board shows what nobody has touched.">
+<meta name="theme-color" content="#07080B">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Dogpile">
+<meta property="og:title" content="Dogpile &middot; red-team a site without all finding the same bug">
+<meta property="og:description" content="Five people testing a site all poke the same button. Dogpile hands everyone a different lane, blocks duplicate reports, and shows the crew what nobody has touched.">
+<meta property="og:url" content="https://aunysillyme.github.io/dogpile/">
+<meta property="og:image" content="https://aunysillyme.github.io/dogpile/og.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Dogpile &middot; red-team a site without all finding the same bug">
+<meta name="twitter:description" content="Everyone gets a different lane. Nobody files the same bug twice. The board shows what nobody has touched.">
+<meta name="twitter:image" content="https://aunysillyme.github.io/dogpile/og.png">
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTAwJz48dGV4dCB5PScuOTJlbScgZm9udC1zaXplPSc5Mic+8J+QvjwvdGV4dD48L3N2Zz4=">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Kalam:wght@400;700&family=Space+Mono:wght@400;700&display=swap">
+
+<style>
+/* DOGPILE - a bulletin board in a dark room.
+   Sketchy inverted: chalk on a board, and the findings are paper pinned to it.
+   Schitzo's law: cold is the ground, the warm colour is the intrusion.
+   ORANGE IS URGENCY, NEVER A CATEGORY. Kinds are told apart by silhouette. */
+:root{
+  --void:#07080B; --board:#0B0D11;
+  --chalk:#EDE6D8; --dust:#8A8578; --faint:#3A3F47;
+  --orange:#FF6B1A; --ember:#FFA45C;
+  --violet:#8B5CF6; --vdim:#5B3FA8;
+  --steel:#6E8598;
+  --paper:#EDE6D8; --ink:#0D1015; --inkdim:#4C5158;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--void)}
+body{color:var(--chalk);font-family:"Space Mono",ui-monospace,Menlo,monospace;font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+#field{position:fixed;inset:0;z-index:0;pointer-events:none}
+.wrap{position:relative;z-index:2;min-height:100vh}
+.screen{display:none}.screen.on{display:block}
+.solo{max-width:640px;margin:0 auto;padding:30px 20px 90px}
+.hall{max-width:1240px;margin:0 auto;padding:20px 18px 100px}
+
+/* masthead */
+.mast{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.mast .w{font-family:Anton,sans-serif;font-size:25px;text-transform:uppercase;letter-spacing:.14em;
+  background:transparent;border:0;padding:0;color:var(--chalk);cursor:pointer;display:flex;align-items:baseline;gap:9px}
+.mast .w i{font-style:normal;color:var(--orange)}
+.mast .w:hover{color:var(--orange)}.mast .w:hover i{color:var(--chalk)}
+.mast .w .hm{font-family:"Space Mono",monospace;font-size:9.5px;letter-spacing:.18em;color:var(--faint);opacity:0}
+.mast .w:hover .hm{opacity:1;color:var(--orange)}
+.chip{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--dust);border:1px solid var(--faint);padding:6px 11px;white-space:nowrap}
+
+h1.hero{font-family:Anton,sans-serif;font-size:clamp(50px,12.5vw,104px);text-transform:uppercase;line-height:.86;margin:0 0 16px}
+h1.hero i{font-style:normal;display:block;color:var(--orange);text-shadow:0 0 34px rgba(255,107,26,.42)}
+.lede{color:var(--dust);font-size:15.5px;line-height:1.75;margin:0 0 22px;max-width:52ch}
+.lede b{color:var(--chalk);font-weight:400}
+.lbl{font-size:10px;letter-spacing:.22em;color:var(--faint);text-transform:uppercase;margin:22px 0 8px}
+.lbl .opt{color:var(--violet);letter-spacing:.14em;margin-left:8px}
+input.t,textarea.t{width:100%;font-family:Anton,sans-serif;font-size:23px;text-transform:uppercase;letter-spacing:.03em;
+  color:var(--chalk);background:transparent;border:0;border-bottom:1px solid var(--faint);padding:8px 2px;outline:none;resize:none}
+input.t:focus,textarea.t:focus{border-bottom-color:var(--orange)}
+input.t::placeholder,textarea.t::placeholder{font-family:"Space Mono",monospace;font-size:14px;text-transform:none;letter-spacing:0;color:var(--faint)}
+textarea.t{font-family:"Space Mono",monospace;font-size:14.5px;text-transform:none;letter-spacing:0;line-height:1.6;min-height:60px}
+textarea.code{font-family:"Space Mono",monospace;font-size:12.5px;line-height:1.55;min-height:120px;white-space:pre;overflow-x:auto}
+button.go{font-family:Anton,sans-serif;font-size:clamp(21px,4.4vw,29px);text-transform:uppercase;letter-spacing:.03em;
+  width:100%;padding:15px 20px;margin-top:20px;cursor:pointer;background:transparent;
+  border:1px solid var(--orange);color:var(--orange);box-shadow:0 0 26px rgba(255,107,26,.15),inset 0 0 30px rgba(255,107,26,.05)}
+button.go:hover{background:var(--orange);color:var(--void)}
+button.go:disabled{opacity:.35;cursor:not-allowed;background:transparent;color:var(--orange)}
+button.ghost{font-family:"Space Mono",monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+  padding:10px 14px;background:transparent;border:1px solid var(--faint);color:var(--dust);cursor:pointer}
+button.ghost:hover{color:var(--chalk);border-color:var(--dust)}
+.stack{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
+.err{color:var(--orange);font-size:13px;min-height:18px;margin-top:8px}
+.note{font-size:12.5px;color:var(--dust);line-height:1.65;margin-top:10px}
+.note b{color:var(--chalk);font-weight:400}
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+
+/* ---- THE TOP RAIL: coverage. gaps stay bright, covered recedes. ---- */
+.railhead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:6px 0 10px}
+.railhead .dark{font-family:Anton,sans-serif;font-size:clamp(20px,4vw,30px);text-transform:uppercase;
+  color:var(--orange);letter-spacing:.03em;text-shadow:0 0 22px rgba(255,107,26,.35)}
+.railhead .allin{color:var(--violet);text-shadow:0 0 22px rgba(139,92,246,.3)}
+.railhead .sub{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.rail{display:grid;grid-template-columns:repeat(auto-fit,minmax(122px,1fr));gap:8px;margin-bottom:24px}
+@media(max-width:560px){.rail{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pl{position:relative;text-align:left;padding:11px 10px 12px;cursor:pointer;background:transparent;font-family:inherit;
+  border:1px solid var(--faint);color:var(--dust)}
+.pl .pn{font-family:Anton,sans-serif;font-size:15px;text-transform:uppercase;letter-spacing:.04em;line-height:1.05;color:var(--steel)}
+.pl .pc{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:4px}
+.pl .hole{position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:7px;height:7px;border-radius:50%;
+  background:var(--void);border:1px solid var(--faint)}
+.pl.gap{border-style:dashed;border-color:var(--orange)}
+.pl.gap .pn{color:var(--orange)}
+.pl.gap .pc{color:var(--ember)}
+.pl.gap .hole{border-color:var(--orange)}
+.pl.held{border-color:var(--vdim)}
+.pl.held .pn{color:var(--violet)}
+.pl.held .hole{background:var(--vdim);border-color:var(--violet)}
+.pl.mine{box-shadow:inset 0 0 24px rgba(255,107,26,.12);border-color:var(--orange)}
+.pl.mine .pn{color:var(--orange)}
+.pl:hover{border-color:var(--chalk)}
+.pl:hover .pn{color:var(--chalk)}
+
+/* ---- THE BOARD: findings as paper, pinned ---- */
+.deck{display:grid;grid-template-columns:minmax(0,1fr) 396px;gap:24px;align-items:start}
+@media(max-width:1000px){.deck{grid-template-columns:minmax(0,1fr)}}
+.col{min-width:0}
+.sect{font-size:10px;letter-spacing:.24em;color:var(--faint);text-transform:uppercase;margin:0 0 12px;
+  border-bottom:1px solid var(--faint);padding-bottom:7px;display:flex;gap:10px;align-items:baseline}
+.sect b{color:var(--chalk);font-weight:400}
+.board{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:16px}
+@media(max-width:640px){.board{grid-template-columns:1fr}}
+
+.pin{position:relative;background:var(--paper);color:var(--ink);padding:15px 14px 13px;
+  box-shadow:3px 4px 0 rgba(0,0,0,.55);font-size:14px;line-height:1.5}
+.pin::after{content:"";position:absolute;top:-6px;left:24px;width:12px;height:12px;border-radius:50%;
+  background:var(--vdim);border:1px solid #2A1F49;box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.45)}
+.pin.hot::after{background:var(--orange);border-color:#8A3708;box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.5)}
+.pin:hover{transform:rotate(0deg) translateY(-2px);box-shadow:4px 6px 0 rgba(0,0,0,.6)}
+.pin .kh{display:flex;align-items:flex-start;gap:9px;margin-bottom:9px}
+.pin .glyph{flex:none;width:26px;height:26px}
+.pin .kn{font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--inkdim);margin-top:2px}
+.pin .fid{margin-left:auto;font-family:Anton,sans-serif;font-size:14px;color:var(--inkdim);letter-spacing:.05em}
+.pin .ft{font-size:14.5px;line-height:1.5;color:var(--ink);margin-bottom:8px;word-wrap:break-word;overflow-wrap:anywhere}
+.pin .fs{font-family:"Space Mono",monospace;font-size:11.5px;line-height:1.5;color:var(--inkdim);
+  border-left:2px solid rgba(13,16,21,.25);padding-left:8px;margin-bottom:9px}
+.pin .swatch{display:inline-block;width:16px;height:16px;border:1px solid rgba(13,16,21,.4);vertical-align:-3px;margin-right:6px}
+.pin .marg{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-family:Kalam,cursive;font-weight:700;font-size:15px;color:var(--inkdim);
+  border-top:1px dashed rgba(13,16,21,.22);padding-top:8px;margin-top:2px}
+.pin .marg .by{font-family:"Space Mono",monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase}
+.pin .marg button{font-family:Kalam,cursive;font-weight:700;font-size:15px;background:transparent;border:0;
+  color:var(--inkdim);cursor:pointer;padding:2px 3px;text-decoration:underline;text-decoration-style:dotted}
+.pin .marg button:hover{color:var(--ink)}
+.pin .marg button.on{color:#B23A00}
+.pin.merged{}
+.pin.merged .slash{position:absolute;inset:0;pointer-events:none}
+.pin.merged .stamp{position:absolute;right:9px;top:36%;font-family:Kalam,cursive;font-weight:700;
+  font-size:23px;color:var(--vdim);transform:rotate(-11deg);letter-spacing:.03em}
+.pin.closed{opacity:.55}
+.pin.closed .ft{text-decoration:line-through;text-decoration-color:#B23A00;text-decoration-thickness:2px}
+.pin .reps{margin-top:8px;border-top:1px dashed rgba(13,16,21,.22);padding-top:7px}
+.pin .rep{font-size:12px;line-height:1.45;color:var(--inkdim);margin-bottom:3px}
+.pin .rep b{color:var(--ink);font-weight:400;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase}
+.pin .repbar{display:flex;gap:0;margin-top:6px;border:1px solid rgba(13,16,21,.25)}
+.pin .repbar input{flex:1;min-width:0;background:transparent;border:0;outline:none;color:var(--ink);
+  font-family:"Space Mono",monospace;font-size:11.5px;padding:6px 7px}
+.pin .repbar input::placeholder{color:rgba(13,16,21,.4)}
+.pin .repbar button{background:transparent;border:0;border-left:1px solid rgba(13,16,21,.25);
+  font-family:Anton,sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--inkdim);cursor:pointer;padding:0 9px}
+
+/* the patch: a receipt taped to the board */
+.pin.patch{padding-top:20px}
+.pin.patch::before{content:"";position:absolute;top:-7px;left:50%;transform:translateX(-50%) rotate(-2deg);
+  width:78px;height:17px;background:rgba(139,92,246,.34);border:1px solid rgba(139,92,246,.5)}
+.pin.patch .code{font-family:"Space Mono",monospace;font-size:11.5px;line-height:1.5;white-space:pre;
+  overflow-x:auto;background:rgba(13,16,21,.06);border-left:2px dotted rgba(13,16,21,.4);
+  padding:9px 10px;margin:4px 0 8px;max-height:210px}
+.pin.patch .code .add{color:#1B6B2E;font-weight:700}
+.pin.patch .code .del{color:#B23A00;text-decoration:line-through}
+
+/* ---- pinned tabs: whiteboard / plan / chat ---- */
+.tabs{display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap}
+.tabs button{font-family:Anton,sans-serif;font-size:14px;text-transform:uppercase;letter-spacing:.06em;
+  padding:9px 13px;background:transparent;border:1px solid var(--faint);color:var(--dust);cursor:pointer;position:relative}
+.tabs button .n{font-family:"Space Mono",monospace;font-size:9.5px;color:var(--faint);margin-left:6px}
+.tabs button:hover{color:var(--chalk);border-color:var(--dust)}
+.tabs button.on{border-color:var(--orange);color:var(--orange)}
+.tabs button.on .n{color:var(--ember)}
+.pane{display:none}.pane.on{display:block}
+
+#wb{display:block;width:100%;height:340px;border:1px solid var(--faint);background:rgba(255,255,255,.015);touch-action:none;cursor:crosshair}
+.wbbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:9px}
+.wbbar .sw{width:22px;height:22px;border:1px solid var(--faint);cursor:pointer;padding:0;background:transparent}
+.wbbar .sw.on{border-color:var(--chalk);box-shadow:0 0 0 2px rgba(237,230,216,.25)}
+
+.chat{display:flex;flex-direction:column;height:340px;border:1px solid var(--faint)}
+.clog{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:9px;scrollbar-width:thin}
+.clog::-webkit-scrollbar{width:5px}.clog::-webkit-scrollbar-thumb{background:var(--faint)}
+.m .nm{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--steel);margin-bottom:2px}
+.m .bd{font-size:13.5px;line-height:1.55;word-wrap:break-word;overflow-wrap:anywhere}
+.m.sys{text-align:center}.m.sys .bd{font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+.m.find .nm{color:var(--orange)}.m.find .bd{color:var(--dust);font-size:12.5px}
+.cbar{display:flex;border-top:1px solid var(--faint)}
+.cbar input{flex:1;min-width:0;background:transparent;border:0;outline:none;color:var(--chalk);font-family:inherit;font-size:13.5px;padding:11px 12px}
+.cbar input::placeholder{color:var(--faint)}
+.cbar button{background:transparent;border:0;border-left:1px solid var(--faint);color:var(--dust);
+  font-family:Anton,sans-serif;font-size:14px;text-transform:uppercase;letter-spacing:.1em;padding:0 16px;cursor:pointer}
+.cbar button:hover{color:var(--orange)}
+
+.plan .pi{display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid rgba(58,63,71,.55);font-size:14px}
+.plan .pi:last-child{border-bottom:0}
+.plan .bx{flex:none;width:16px;height:16px;border:1px solid var(--faint);background:transparent;cursor:pointer;margin-top:2px;padding:0;position:relative}
+.plan .pi.done .bx{border-color:var(--violet)}
+.plan .pi.done .bx::after{content:"\2713";position:absolute;inset:-5px 0 0 1px;color:var(--violet);font-family:Kalam,cursive;font-size:18px}
+.plan .pi.done .tx{color:var(--faint);text-decoration:line-through}
+.plan .tx{flex:1;line-height:1.5}
+.plan .who{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.plan .rm{background:transparent;border:0;color:var(--faint);cursor:pointer;font-size:15px;padding:0 4px}
+.plan .rm:hover{color:var(--orange)}
+
+.crew{display:flex;gap:11px;flex-wrap:wrap;margin-bottom:14px}
+.pf{display:flex;flex-direction:column;align-items:center;gap:3px;width:50px}
+.pf span{font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--dust);max-width:50px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf.me span{color:var(--orange)}
+.pf .ln{font-size:7.5px;letter-spacing:.06em;color:var(--faint);text-transform:uppercase}
+
+.target{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.target a{font-family:Anton,sans-serif;font-size:clamp(17px,3.4vw,25px);text-transform:uppercase;
+  color:var(--violet);text-decoration:none;letter-spacing:.03em;word-break:break-all}
+.target a:hover{color:var(--orange)}
+.target .nt{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+
+.brief{border:1px solid var(--faint);border-left:2px solid var(--orange);padding:12px 14px;margin-bottom:16px}
+.brief .bl{font-family:Anton,sans-serif;font-size:clamp(24px,5vw,36px);text-transform:uppercase;color:var(--orange);line-height:1;margin-bottom:5px}
+.brief .bb{font-size:13.5px;color:var(--chalk);line-height:1.55}
+.brief .sw{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px}
+.brief .sw button{font-family:"Space Mono",monospace;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;
+  padding:4px 7px;background:transparent;border:1px solid var(--faint);color:var(--faint);cursor:pointer}
+.brief .sw button:hover{color:var(--violet);border-color:var(--violet)}
+
+.kindpick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:4px}
+.kindpick button{background:transparent;border:1px solid var(--faint);color:var(--dust);cursor:pointer;
+  padding:9px 4px;font-family:"Space Mono",monospace;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;
+  display:flex;flex-direction:column;align-items:center;gap:5px}
+.kindpick button.on{border-color:var(--orange);color:var(--orange)}
+.kindpick button:hover{border-color:var(--dust);color:var(--chalk)}
+.sevpick{display:flex;gap:6px;flex-wrap:wrap}
+.sevpick button{font-family:"Space Mono",monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+  padding:6px 10px;background:transparent;border:1px solid var(--faint);color:var(--faint);cursor:pointer}
+.sevpick button.on{border-color:var(--orange);color:var(--orange)}
+.gate{border:1px dashed var(--orange);padding:13px 14px;margin-top:12px;background:rgba(255,107,26,.05)}
+.gate h6{font-family:Anton,sans-serif;font-size:17px;text-transform:uppercase;color:var(--orange);margin:0 0 4px;letter-spacing:.04em}
+.gate p{margin:0 0 9px;font-size:12.5px;color:var(--dust);line-height:1.5}
+.gate .dq{font-size:13.5px;color:var(--chalk);border-left:2px solid var(--orange);padding-left:10px;margin-bottom:10px;line-height:1.5}
+.gate .dq b{color:var(--dust);font-weight:400;font-size:10px;letter-spacing:.12em;text-transform:uppercase;display:block;margin-top:3px}
+.empty{font-size:13px;color:var(--faint);padding:8px 0;line-height:1.6}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.pin:hover{transform:none}}
+</style>
+
+<canvas id="field"></canvas>
+<div class="wrap">
+
+<div class="screen on solo" id="s0">
+  <div class="mast">
+    <button class="w" id="home0">DOG<i>PILE</i></button>
+    <div class="chip">group thrashing</div>
+  </div>
+  <h1 class="hero">everyone<i>found the same bug</i></h1>
+  <p class="lede">Five people red-team a site and four of them poke the same hero button, while <b>most of the thing never gets touched</b>. A pile-on feels productive and covers nothing.</p>
+  <p class="lede">Dogpile puts every person in a <b>different lane</b>, refuses a finding somebody already filed, and keeps the gaps lit so the crew can see <b>what nobody has looked at</b>. Bugs, feature ideas, colour changes and actual code patches all go on the same board.</p>
+
+  <div class="lbl">the site you're thrashing</div>
+  <input class="t" id="tgt" placeholder="paste any url - it opens in your own tab, so logins and paywalls still work">
+  <div class="lbl">your name</div>
+  <input class="t" id="nm" maxlength="14" placeholder="what the crew calls you">
+  <div class="lbl">room <span class="opt">already made for you</span></div>
+  <input class="t" id="rc" maxlength="10">
+  <div class="note" id="shareNow"></div>
+  <button class="go" id="enter">open the board</button>
+  <div class="err" id="e0"></div>
+  <div class="stack"><button class="ghost" id="demo">show me a board mid-thrash</button></div>
+</div>
+
+<div class="screen hall" id="s1">
+  <div class="mast">
+    <button class="w" id="home1">DOG<i>PILE</i></button>
+    <div class="chip" id="roomChip">room</div>
+  </div>
+
+  <div class="target">
+    <span class="nt">thrashing</span>
+    <a id="tgtLink" href="#" target="_blank" rel="noopener noreferrer">-</a>
+    <span class="nt">opens in your own tab &#8599;</span>
+  </div>
+
+  <div class="railhead">
+    <span class="dark" id="darkN">-</span>
+    <span class="sub">tap a lane to take it</span>
+  </div>
+  <div class="rail" id="rail"></div>
+
+  <div class="deck">
+    <div class="col">
+      <div class="sect">the board <b id="wallN">0</b> <span style="margin-left:auto;color:var(--faint)" id="wallBreak"></span></div>
+      <div class="board" id="board"></div>
+      <div class="empty" id="boardEmpty">Nothing pinned yet. Go break something.</div>
+    </div>
+
+    <div class="col">
+      <div class="brief" id="brief"></div>
+      <div class="crew" id="crew"></div>
+
+      <div class="sect">file it</div>
+      <div class="kindpick" id="kindPick"></div>
+      <textarea class="t" id="fText" maxlength="300" placeholder="what happened, in plain words"></textarea>
+      <div id="extra"></div>
+      <div class="lbl" style="margin:12px 0 6px">how bad</div>
+      <div class="sevpick" id="sevPick"></div>
+      <button class="go" id="fileIt">pin it to the board</button>
+      <div class="err" id="e1"></div>
+      <div id="gate"></div>
+
+      <div class="sect" style="margin-top:26px">the crew</div>
+      <div class="tabs" id="tabs"></div>
+      <div class="pane" id="pane-board">
+        <canvas id="wb" width="760" height="680"></canvas>
+        <div class="wbbar" id="wbbar"></div>
+      </div>
+      <div class="pane" id="pane-plan">
+        <div class="plan" id="planList"></div>
+        <div class="cbar" style="border:1px solid var(--faint);margin-top:10px">
+          <input id="pin_" maxlength="200" placeholder="what are we actually going to do" autocomplete="off">
+          <button id="padd">add</button>
+        </div>
+      </div>
+      <div class="pane on" id="pane-chat">
+        <div class="chat">
+          <div class="clog" id="clog"></div>
+          <div class="cbar">
+            <input id="cin" maxlength="240" placeholder="talk to the crew" autocomplete="off">
+            <button id="csend">say</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+var API="https://dogpile-room.aunysillyme.workers.dev";
+var $=function(i){return document.getElementById(i);};
+function esc(t){return String(t==null?"":t).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+
+var ME={id:null,name:null,room:null,lane:null};
+var LANES=[],KINDS={},LAST={players:[],finds:[],coverage:{},plan:[],strokes:[]};
+var SEEN=0,POLL=null,DEMO=false,KIND="bug",SEV="med",TAB="chat",SIDS=0;
+
+/* ---------- room code ---------- */
+var WORDS=["THRASH","PILE","WRECK","SMOKE","CRASH","POKE","BREAK","STRESS","FUZZ","SHAKE"];
+function newCode(){return WORDS[Math.floor(Math.random()*WORDS.length)]+(10+Math.floor(Math.random()*89));}
+function setRoomInUrl(c){try{if(c)history.replaceState(null,"","#"+c);}catch(e){}}
+function inviteUrl(){return location.origin+location.pathname+"#"+($("rc").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"")||"");}
+try{
+  var h=(location.hash||"").replace("#","").toUpperCase().replace(/[^A-Z0-9]/g,"");
+  $("rc").value=h||newCode();setRoomInUrl($("rc").value);
+}catch(e){$("rc").value=newCode();}
+function shareLine(){$("shareNow").innerHTML="Send this and they land on your board: <b>"+esc(inviteUrl().replace(/^https?:\/\//,""))+"</b>";}
+shareLine();
+$("rc").addEventListener("input",function(){
+  var v=$("rc").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"");if(v)setRoomInUrl(v);shareLine();
+});
+
+/* ---------- glyphs: kinds told apart by silhouette, not colour ---------- */
+function glyph(k,size,col){
+  var s=size||26,c=col||"#0D1015",p={
+    bug:'<circle cx="12" cy="12" r="9.2"/><path d="M8.4 8.4 L15.6 15.6 M15.6 8.4 L8.4 15.6"/>',
+    feature:'<path d="M12 2.6 L14.5 9.2 L21.5 9.2 L15.9 13.4 L18 20.2 L12 16 L6 20.2 L8.1 13.4 L2.5 9.2 L9.5 9.2 Z"/>',
+    design:'<path d="M2.2 12 C6 6 18 6 21.8 12 C18 18 6 18 2.2 12 Z"/><circle cx="12" cy="12" r="3.1"/>',
+    patch:'<path d="M8.6 7.5 L4 12 L8.6 16.5 M15.4 7.5 L20 12 L15.4 16.5 M13.4 5.4 L10.6 18.6"/>'
+  }[k]||"";
+  return '<svg class="glyph" width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="'+c+
+    '" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';
+}
+function avatar(i,size){
+  i=(i|0)%24;var C=["#FF6B1A","#8B5CF6","#EDE6D8","#6E8598","#FFA45C","#5B3FA8"],col=C[i%C.length],s=size||30;
+  var E=['<circle cx="9" cy="13" r="2" fill="C"/><circle cx="17" cy="13" r="2" fill="C"/>',
+    '<path d="M7 13.5 L11 13.5 M15 13.5 L19 13.5" stroke="C" stroke-width="1.8" stroke-linecap="round"/>',
+    '<path d="M7.4 14.6 Q9.2 11.4 11 14.6 M15 14.6 Q16.8 11.4 18.6 14.6" stroke="C" stroke-width="1.6" fill="none" stroke-linecap="round"/>',
+    '<circle cx="9" cy="13" r="2.9" fill="none" stroke="C" stroke-width="1.2"/><circle cx="9" cy="13.6" r="1.2" fill="C"/><circle cx="17" cy="13" r="2.9" fill="none" stroke="C" stroke-width="1.2"/><circle cx="17" cy="13.6" r="1.2" fill="C"/>',
+    '<path d="M6.4 11.6 L11.6 14.4 M6.4 14.4 L11.6 11.6 M14.4 11.6 L19.6 14.4 M14.4 14.4 L19.6 11.6" stroke="C" stroke-width="1.4" stroke-linecap="round"/>',
+    '<circle cx="9" cy="13" r="2" fill="C"/><path d="M14.6 13.4 Q17 10.6 19.4 13.4" stroke="C" stroke-width="1.5" fill="none" stroke-linecap="round"/>'];
+  var M=['<path d="M8.6 18.4 Q13 22.2 17.4 18.4" stroke="C" stroke-width="1.6" fill="none" stroke-linecap="round"/>',
+    '<path d="M8.6 20.4 Q13 16.8 17.4 20.4" stroke="C" stroke-width="1.6" fill="none" stroke-linecap="round"/>',
+    '<ellipse cx="13" cy="19.6" rx="2.8" ry="3.2" fill="C"/>',
+    '<path d="M8.4 19.4 L17.6 19.4" stroke="C" stroke-width="1.7" stroke-linecap="round"/>',
+    '<path d="M8.4 18.6 L11 20.8 L13.6 18.6 L16.2 20.8 L18 18.9" stroke="C" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+    '<path d="M9 18.2 Q13 22.8 17 18.2 Z" fill="none" stroke="C" stroke-width="1.5" stroke-linejoin="round"/>'];
+  var H=['<path d="M13 2.6 L13 6.2" stroke="C" stroke-width="1.4" stroke-linecap="round"/><circle cx="13" cy="1.9" r="1.4" fill="C"/>',
+    '<path d="M6.8 6.6 L9.6 2.8 M19.2 6.6 L16.4 2.8" stroke="C" stroke-width="1.4" stroke-linecap="round"/>',
+    '<path d="M5.6 6 Q13 -0.4 20.4 6" stroke="C" stroke-width="1.4" fill="none" stroke-linecap="round"/>','',
+    '<path d="M9 4.6 L13 1.4 L17 4.6" stroke="C" stroke-width="1.4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>',
+    '<circle cx="5.2" cy="9.4" r="1.4" fill="none" stroke="C" stroke-width="1.1"/><circle cx="20.8" cy="9.4" r="1.4" fill="none" stroke="C" stroke-width="1.1"/>'];
+  var e=E[i%E.length],m=M[(i+2)%M.length],hh=H[(i+4)%H.length];
+  return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 26 26" aria-hidden="true">'+
+    '<circle cx="13" cy="14.6" r="10.2" fill="none" stroke="'+col+'" stroke-width="1.2" opacity=".85"/>'+
+    (hh?hh.replace(/C/g,col):"")+e.replace(/C/g,col)+m.replace(/C/g,col)+'</svg>';
+}
+
+/* ---------- net ---------- */
+function post(act,body){
+  return fetch(API+"/r/"+ME.room+"/"+act,{method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify(body||{})}).then(function(r){return r.json();});
+}
+
+/* ---------- join ---------- */
+$("enter").addEventListener("click",function(){
+  var nm=$("nm").value.trim(),rc=$("rc").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,""),tg=$("tgt").value.trim();
+  if(!nm){$("e0").textContent="the crew needs a name";$("nm").focus();return;}
+  if(!rc){rc=newCode();$("rc").value=rc;}
+  $("e0").textContent="";$("enter").disabled=true;ME.room=rc;
+  post("join",{name:nm,target:tg}).then(function(r){
+    $("enter").disabled=false;
+    if(r.error){$("e0").textContent=r.error;return;}
+    ME.id=r.id;ME.name=r.name;ME.lane=r.lane;LANES=r.lanes||[];
+    setRoomInUrl(rc);
+    $("roomChip").textContent="room "+rc;
+    setTarget(r.target);
+    $("s0").className="screen solo";$("s1").className="screen hall on";
+    buildPickers();buildTabs();startPoll();window.scrollTo(0,0);
+  }).catch(function(){$("enter").disabled=false;$("e0").textContent="could not reach the room";});
+});
+$("nm").addEventListener("keydown",function(ev){if(ev.code==="Enter")$("enter").click();});
+$("tgt").addEventListener("keydown",function(ev){if(ev.code==="Enter")$("nm").focus();});
+
+function setTarget(t){
+  var a=$("tgtLink");
+  if(!t){a.textContent="no target set";a.removeAttribute("href");return;}
+  a.textContent=t.replace(/^https?:\/\//,"");a.href=t;
+}
+
+/* ---------- pickers ---------- */
+var KLIST=[["bug","BUG"],["feature","FEATURE"],["design","DESIGN"],["patch","PATCH"]];
+function buildPickers(){
+  $("kindPick").innerHTML=KLIST.map(function(k){
+    return '<button data-k="'+k[0]+'"'+(k[0]===KIND?' class="on"':'')+'>'+
+      glyph(k[0],22,k[0]===KIND?"#FF6B1A":"#8A8578")+k[1]+'</button>';
+  }).join("");
+  $("sevPick").innerHTML=[["low","minor"],["med","annoying"],["high","broken"]].map(function(s){
+    return '<button data-s="'+s[0]+'"'+(s[0]===SEV?' class="on"':'')+'>'+s[1]+'</button>';
+  }).join("");
+  extraFields();
+}
+$("kindPick").addEventListener("click",function(e){
+  var b=e.target.closest("[data-k]");if(!b)return;KIND=b.dataset.k;buildPickers();
+});
+$("sevPick").addEventListener("click",function(e){
+  var b=e.target.closest("[data-s]");if(!b)return;SEV=b.dataset.s;buildPickers();
+});
+function extraFields(){
+  var h="";
+  if(KIND==="bug"||KIND==="patch"){
+    h+='<div class="lbl" style="margin:12px 0 6px">how to make it happen again</div>'+
+       '<textarea class="t" id="fSteps" maxlength="300" placeholder="375px wide, tap signup, nothing happens" style="min-height:46px"></textarea>';
+  }
+  if(KIND==="patch"){
+    h+='<div class="lbl" style="margin:12px 0 6px">the fix</div>'+
+       '<textarea class="t code" id="fCode" maxlength="4000" placeholder="paste code. prefix lines with + or - and they render as a diff." spellcheck="false"></textarea>';
+  }
+  if(KIND==="design"){
+    h+='<div class="lbl" style="margin:12px 0 6px">colour, if it is one</div>'+
+       '<input class="t" id="fColor" maxlength="40" placeholder="#FF6B1A, or leave it empty" style="font-family:\'Space Mono\',monospace;font-size:15px;text-transform:none">';
+  }
+  $("extra").innerHTML=h;
+  $("sevPick").parentNode.querySelector(".lbl").textContent=(KIND==="bug"?"how bad":"how much it matters");
+}
+
+/* ---------- filing, and the gate ---------- */
+function readForm(){
+  return {
+    text:$("fText").value.trim(),
+    steps:($("fSteps")&&$("fSteps").value.trim())||"",
+    code:($("fCode")&&$("fCode").value)||"",
+    color:($("fColor")&&$("fColor").value.trim())||"",
+    kind:KIND,sev:SEV
+  };
+}
+function clearForm(){
+  $("fText").value="";if($("fSteps"))$("fSteps").value="";
+  if($("fCode"))$("fCode").value="";if($("fColor"))$("fColor").value="";
+  $("gate").innerHTML="";
+}
+$("fileIt").addEventListener("click",function(){send(false);});
+function send(force){
+  var f=readForm();
+  if(f.text.length<6){$("e1").textContent="say what actually happened";return;}
+  $("e1").textContent="";$("fileIt").disabled=true;
+  var body=Object.assign({id:ME.id},f);if(force)body.force=1;
+  post("file",body).then(function(r){
+    $("fileIt").disabled=false;
+    if(r.error){$("e1").textContent=r.error;return;}
+    if(r.dupe){showGate(r.dupe);return;}
+    clearForm();pull();
+  }).catch(function(){$("fileIt").disabled=false;$("e1").textContent="could not reach the room";});
+}
+function showGate(d){
+  $("gate").innerHTML='<div class="gate"><h6>somebody already said that</h6>'+
+    '<p>Same finding, different words. Back theirs up, or say something nobody has said yet.</p>'+
+    '<div class="dq">'+esc(d.text)+'<b>#'+d.id+' &middot; '+esc(d.by)+'</b></div>'+
+    '<div class="stack" style="margin-top:0">'+
+      '<button class="ghost" id="gPlus">+1 theirs instead</button>'+
+      '<button class="ghost" id="gForce">no, mine is different</button>'+
+    '</div></div>';
+  $("gPlus").onclick=function(){
+    post("plus",{id:ME.id,find:d.id}).then(function(){clearForm();pull();});
+  };
+  $("gForce").onclick=function(){send(true);};
+}
+
+/* ---------- polling ---------- */
+function startPoll(){if(POLL)clearInterval(POLL);pull();POLL=setInterval(pull,1500);}
+function pull(){
+  if(DEMO||!ME.room)return;
+  fetch(API+"/r/"+ME.room+"/state?since="+SEEN).then(function(r){return r.json();}).then(paint).catch(function(){});
+}
+function paint(d){
+  if(!d||d.error)return;
+  LAST=d;LANES=d.lanes||LANES;KINDS=d.kinds||KINDS;
+  var mine=(d.players||[]).filter(function(p){return p.id===ME.id;})[0];
+  if(mine)ME.lane=mine.lane;
+  if(d.target)setTarget(d.target);
+  drawRail();drawBrief();drawCrew();drawBoard();drawPlan();drawTabs();
+  if(d.strokes&&d.sid!==SIDS){SIDS=d.sid;drawWB(d.strokes);}
+  if(d.msgs&&d.msgs.length){
+    var log=$("clog"),near=(log.scrollHeight-log.scrollTop-log.clientHeight)<90;
+    d.msgs.forEach(function(m){
+      SEEN=Math.max(SEEN,m.i);
+      var el=document.createElement("div");el.className="m "+(m.kind||"say");
+      el.innerHTML=(m.kind==="sys"?"":'<div class="nm">'+esc(m.from)+'</div>')+'<div class="bd">'+esc(m.body)+'</div>';
+      log.appendChild(el);
+    });
+    if(near)log.scrollTop=log.scrollHeight;
+  }
+}
+
+/* ---------- the rail: gaps stay bright ---------- */
+function drawRail(){
+  var cov=LAST.coverage||{},gaps=0;
+  var h=LANES.map(function(l){
+    var c=cov[l.id]||{finds:0,people:0};
+    var gap=(c.people===0&&c.finds===0);if(gap)gaps++;
+    var cls="pl"+(gap?" gap":(c.people?" held":""))+(ME.lane===l.id?" mine":"");
+    var sub=gap?"nobody tested this":(c.finds+" found &middot; "+c.people+" here");
+    return '<button class="'+cls+'" data-l="'+l.id+'"><span class="hole"></span>'+
+      '<div class="pn">'+esc(l.label)+'</div><div class="pc">'+sub+'</div></button>';
+  }).join("");
+  if($("rail").dataset.k!==h){$("rail").innerHTML=h;$("rail").dataset.k=h;}
+  $("darkN").textContent=gaps?(gaps+(gaps===1?" lane still dark":" lanes still dark")):"every lane has been touched";
+  $("darkN").className=gaps?"dark":"dark allin";
+}
+$("rail").addEventListener("click",function(e){
+  var b=e.target.closest("[data-l]");if(!b||DEMO)return;
+  post("relane",{id:ME.id,lane:b.dataset.l}).then(function(){pull();});
+});
+function drawBrief(){
+  var L=LANES.filter(function(l){return l.id===ME.lane;})[0];if(!L)return;
+  $("brief").innerHTML='<div class="bl">'+esc(L.label)+'</div><div class="bb">'+esc(L.brief)+'</div>'+
+    '<div class="sw">'+LANES.filter(function(l){return l.id!==ME.lane;}).map(function(l){
+      return '<button data-l="'+l.id+'">'+esc(l.label)+'</button>';}).join("")+'</div>';
+}
+$("brief").addEventListener("click",function(e){
+  var b=e.target.closest("[data-l]");if(!b||DEMO)return;
+  post("relane",{id:ME.id,lane:b.dataset.l}).then(function(){pull();});
+});
+function drawCrew(){
+  var h=(LAST.players||[]).map(function(p){
+    var L=LANES.filter(function(l){return l.id===p.lane;})[0];
+    return '<div class="pf'+(p.id===ME.id?" me":"")+'">'+avatar(p.av,32)+
+      '<span>'+esc(p.name)+'</span><span class="ln">'+esc(L?L.label:"")+'</span></div>';
+  }).join("");
+  if($("crew").dataset.k!==h){$("crew").innerHTML=h;$("crew").dataset.k=h;}
+}
+
+/* ---------- the board ---------- */
+function difflines(code){
+  return String(code).split("\n").slice(0,400).map(function(l){
+    var c=l.charAt(0)==="+"?"add":(l.charAt(0)==="-"?"del":"");
+    return c?'<span class="'+c+'">'+esc(l)+'</span>':esc(l);
+  }).join("\n");
+}
+function drawBoard(){
+  var fs=LAST.finds||[];
+  $("wallN").textContent=fs.length;
+  $("boardEmpty").style.display=fs.length?"none":"block";
+  var open=fs.filter(function(f){return f.status==="open";}).length;
+  $("wallBreak").textContent=fs.length?(open+" open"):"";
+  var h=fs.map(function(f){
+    var tilt=[-1.2,0,1][f.id%3];
+    var hot=(f.sev==="high"&&f.status==="open");
+    var cls="pin "+(f.kind==="patch"?"patch ":"")+(f.status==="merged"?"merged ":"")+
+      (f.status==="closed"?"closed ":"")+(hot?"hot":"");
+    var mine=ME.name&&f.plus.indexOf(ME.name)>=0;
+    var body="";
+    if(f.kind==="patch"&&f.code)body+='<div class="code">'+difflines(f.code)+'</div>';
+    if(f.kind==="design"&&f.color)body+='<div style="margin-bottom:8px"><span class="swatch" style="background:'+esc(f.color)+'"></span><span style="font-size:12px">'+esc(f.color)+'</span></div>';
+    if(f.steps)body+='<div class="fs">'+esc(f.steps)+'</div>';
+    var reps=(f.replies||[]).map(function(r){
+      return '<div class="rep"><b>'+esc(r.by)+'</b> '+esc(r.text)+'</div>';}).join("");
+    return '<div class="'+cls+'" style="transform:rotate('+tilt+'deg)" data-f="'+f.id+'">'+
+      (f.status==="merged"?'<span class="stamp">shipped</span>':'')+
+      '<div class="kh">'+glyph(f.kind,26)+'<div><div class="kn">'+esc((KINDS[f.kind]||{}).label||f.kind)+'</div></div>'+
+      '<span class="fid">#'+f.id+'</span></div>'+
+      '<div class="ft">'+esc(f.text)+'</div>'+body+
+      '<div class="marg"><span class="by">'+esc(f.by)+' &middot; '+esc(f.lane)+'</span>'+
+        '<button class="plus'+(mine?" on":"")+'" data-a="plus">+'+f.plus.length+'</button>'+
+        (f.kind==="patch"&&f.code?'<button data-a="copy">copy</button>':'')+
+        '<button data-a="'+(f.status==="merged"?"open":"merged")+'">'+(f.status==="merged"?"unship":"ship it")+'</button>'+
+        '<button data-a="'+(f.status==="closed"?"open":"closed")+'">'+(f.status==="closed"?"reopen":"not a bug")+'</button>'+
+      '</div>'+
+      (reps?'<div class="reps">'+reps+'</div>':'')+
+      '<div class="repbar"><input maxlength="240" placeholder="reply"><button data-a="reply">say</button></div>'+
+    '</div>';
+  }).join("");
+  if($("board").dataset.k!==h){$("board").innerHTML=h;$("board").dataset.k=h;}
+}
+$("board").addEventListener("click",function(e){
+  var b=e.target.closest("[data-a]");if(!b||DEMO)return;
+  var card=b.closest("[data-f]"),fid=Number(card.dataset.f),a=b.dataset.a;
+  if(a==="plus")post("plus",{id:ME.id,find:fid}).then(pull);
+  else if(a==="copy"){
+    var f=(LAST.finds||[]).filter(function(x){return x.id===fid;})[0];
+    if(f)navigator.clipboard.writeText(f.code||"").then(function(){b.textContent="copied";});
+  }
+  else if(a==="reply"){
+    var inp=card.querySelector(".repbar input"),t=inp.value.trim();
+    if(!t)return;inp.value="";post("reply",{id:ME.id,find:fid,text:t}).then(pull);
+  }
+  else post("mark",{id:ME.id,find:fid,status:a}).then(pull);
+});
+$("board").addEventListener("keydown",function(e){
+  if(e.code!=="Enter")return;
+  var inp=e.target.closest(".repbar input");if(!inp)return;
+  var card=inp.closest("[data-f]"),t=inp.value.trim();if(!t)return;
+  inp.value="";post("reply",{id:ME.id,find:Number(card.dataset.f),text:t}).then(pull);
+});
+
+/* ---------- tabs ---------- */
+function buildTabs(){
+  $("tabs").innerHTML=[["chat","CHAT"],["board","WHITEBOARD"],["plan","THE PLAN"]].map(function(t){
+    return '<button data-t="'+t[0]+'"'+(t[0]===TAB?' class="on"':'')+'>'+t[1]+'<span class="n" id="n-'+t[0]+'"></span></button>';
+  }).join("");
+  ["chat","board","plan"].forEach(function(t){$("pane-"+t).className="pane"+(t===TAB?" on":"");});
+  buildWBbar();
+}
+function drawTabs(){
+  var n=$("n-plan");if(n)n.textContent=(LAST.plan||[]).length?("("+(LAST.plan||[]).filter(function(p){return !p.done;}).length+")"):"";
+}
+$("tabs").addEventListener("click",function(e){
+  var b=e.target.closest("[data-t]");if(!b)return;TAB=b.dataset.t;buildTabs();
+  if(TAB==="board"){fitWB();drawWB(LAST.strokes||[]);}
+});
+
+/* ---------- whiteboard ---------- */
+var WBC=["#EDE6D8","#FF6B1A","#8B5CF6","#6E8598"],WBCOL="#EDE6D8",WBW=2.4;
+function buildWBbar(){
+  var b=$("wbbar");if(!b)return;
+  b.innerHTML=WBC.map(function(c){
+    return '<button class="sw'+(c===WBCOL?" on":"")+'" data-c="'+c+'" style="background:'+c+'" aria-label="colour"></button>';
+  }).join("")+'<button class="ghost" data-w="undo" style="margin-left:6px">undo mine</button>'+
+    '<button class="ghost" data-w="clear">wipe it</button>';
+}
+$("wbbar").addEventListener("click",function(e){
+  var c=e.target.closest("[data-c]");
+  if(c){WBCOL=c.dataset.c;buildWBbar();return;}
+  var w=e.target.closest("[data-w]");if(!w||DEMO)return;
+  post("undraw",{id:ME.id,all:w.dataset.w==="clear"?1:0}).then(function(){SIDS=-1;pull();});
+});
+function fitWB(){
+  var cv=$("wb");if(!cv)return;
+  var r=cv.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);
+  cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr);
+  cv.getContext("2d").setTransform(dpr,0,0,dpr,0,0);
+}
+function drawWB(strokes){
+  var cv=$("wb");if(!cv)return;var c=cv.getContext("2d");
+  var r=cv.getBoundingClientRect(),W=r.width,H=r.height;
+  c.clearRect(0,0,W,H);c.lineCap="round";c.lineJoin="round";
+  (strokes||[]).forEach(function(s){
+    c.strokeStyle=s.c;c.lineWidth=s.w;c.beginPath();
+    s.pts.forEach(function(p,i){var x=p[0]*W,y=p[1]*H;if(i)c.lineTo(x,y);else c.moveTo(x,y);});
+    c.stroke();
+  });
+  if(CUR.length>1){
+    c.strokeStyle=WBCOL;c.lineWidth=WBW;c.beginPath();
+    CUR.forEach(function(p,i){var x=p[0]*W,y=p[1]*H;if(i)c.lineTo(x,y);else c.moveTo(x,y);});
+    c.stroke();
+  }
+}
+var CUR=[],DRAW=false;
+function wbPt(ev){
+  var cv=$("wb"),r=cv.getBoundingClientRect();
+  var t=(ev.touches&&ev.touches[0])||ev;
+  return [(t.clientX-r.left)/r.width,(t.clientY-r.top)/r.height];
+}
+function wbStart(ev){if(DEMO)return;ev.preventDefault();DRAW=true;CUR=[wbPt(ev)];}
+function wbMove(ev){if(!DRAW)return;ev.preventDefault();CUR.push(wbPt(ev));drawWB(LAST.strokes||[]);}
+function wbEnd(){
+  if(!DRAW)return;DRAW=false;
+  if(CUR.length>1)post("draw",{id:ME.id,stroke:{c:WBCOL,w:WBW,pts:CUR}}).then(function(){SIDS=-1;pull();});
+  CUR=[];
+}
+(function(){
+  var cv=$("wb");if(!cv)return;
+  cv.addEventListener("mousedown",wbStart);cv.addEventListener("touchstart",wbStart,{passive:false});
+  addEventListener("mousemove",wbMove);cv.addEventListener("touchmove",wbMove,{passive:false});
+  addEventListener("mouseup",wbEnd);cv.addEventListener("touchend",wbEnd);
+  addEventListener("resize",function(){fitWB();drawWB(LAST.strokes||[]);});
+})();
+
+/* ---------- the plan ---------- */
+function drawPlan(){
+  var p=LAST.plan||[];
+  var h=p.length?p.map(function(it){
+    return '<div class="pi'+(it.done?" done":"")+'" data-p="'+it.id+'">'+
+      '<button class="bx" data-pa="tick" aria-label="done"></button>'+
+      '<div class="tx">'+esc(it.text)+'<div class="who">'+esc(it.by)+'</div></div>'+
+      '<button class="rm" data-pa="rm" aria-label="remove">&times;</button></div>';
+  }).join(""):'<div class="empty">Nothing agreed yet. What are we actually going to do about all this?</div>';
+  if($("planList").dataset.k!==h){$("planList").innerHTML=h;$("planList").dataset.k=h;}
+}
+$("planList").addEventListener("click",function(e){
+  var b=e.target.closest("[data-pa]");if(!b||DEMO)return;
+  var id=Number(b.closest("[data-p]").dataset.p);
+  post("planpoke",{id:ME.id,item:id,remove:b.dataset.pa==="rm"?1:0}).then(pull);
+});
+function addPlan(){
+  var t=$("pin_").value.trim();if(!t)return;$("pin_").value="";
+  post("plan",{id:ME.id,text:t}).then(pull);
+}
+$("padd").addEventListener("click",addPlan);
+$("pin_").addEventListener("keydown",function(ev){if(ev.code==="Enter")addPlan();});
+
+/* ---------- chat ---------- */
+function say(){
+  var t=$("cin").value.trim();if(!t||!ME.id)return;$("cin").value="";
+  post("say",{id:ME.id,text:t}).then(pull);
+}
+$("csend").addEventListener("click",say);
+$("cin").addEventListener("keydown",function(ev){if(ev.code==="Enter")say();});
+
+/* ---------- home ---------- */
+function goHome(){
+  $("s1").className="screen hall";$("s0").className="screen solo on";window.scrollTo(0,0);
+  if(ME.room)$("rc").value=ME.room;if(ME.name)$("nm").value=ME.name;shareLine();
+}
+["home0","home1"].forEach(function(i){var e=$(i);if(e)e.addEventListener("click",goHome);});
+
+/* ---------- demo ---------- */
+$("demo").addEventListener("click",function(){
+  DEMO=true;
+  LANES=[{id:"forms",label:"FORMS",brief:"Every input. Empty, huge, emoji, paste, tab order, double-submit."},
+    {id:"mobile",label:"SMALL SCREEN",brief:"Narrow the window to 375px. What overflows, overlaps, or vanishes."},
+    {id:"links",label:"LINKS",brief:"Click everything. Dead ends, wrong tabs, 404s, back button."},
+    {id:"edge",label:"EDGE INPUT",brief:"Absurd values. Negative, zero, 10,000 chars, script tags, unicode."},
+    {id:"flow",label:"THE FLOW",brief:"The one thing the site is FOR. Do it start to finish. Then do it wrong."},
+    {id:"slow",label:"SLOW + COLD",brief:"Hard reload, throttled, no cache. What breaks before it loads."},
+    {id:"a11y",label:"KEYBOARD",brief:"Tab only, no mouse. Focus visible? Can you escape? Can you finish?"},
+    {id:"copy",label:"WORDS",brief:"Typos, lies, stale prices, broken tone, unlabelled buttons."},
+    {id:"look",label:"LOOK",brief:"Colour, contrast, spacing, hierarchy. What is ugly and what is unreadable."},
+    {id:"idea",label:"WHAT'S MISSING",brief:"Not bugs. The feature that should obviously exist and does not."}];
+  KINDS={bug:{label:"BUG"},feature:{label:"FEATURE"},design:{label:"DESIGN"},patch:{label:"PATCH"}};
+  ME.name="AUNY";ME.lane="forms";
+  LAST={
+    target:"https://example.com",
+    players:[{id:"1",name:"AUNY",lane:"forms",av:3,finds:2},{id:"2",name:"SAM",lane:"mobile",av:8,finds:1},
+      {id:"3",name:"JESS",lane:"links",av:14,finds:1},{id:"4",name:"MARCO",lane:"look",av:19,finds:1}],
+    coverage:{forms:{finds:2,people:1},mobile:{finds:1,people:1},links:{finds:1,people:1},look:{finds:1,people:1},
+      edge:{finds:0,people:0},flow:{finds:0,people:0},slow:{finds:0,people:0},a11y:{finds:0,people:0},
+      copy:{finds:0,people:0},idea:{finds:0,people:0}},
+    finds:[
+      {id:5,by:"MARCO",av:19,lane:"look",kind:"design",text:"the CTA orange fails contrast on the dark hero",color:"#FF6B1A",steps:"",sev:"med",status:"open",plus:["AUNY"],replies:[{by:"JESS",text:"agreed, it's 2.9:1"}]},
+      {id:4,by:"JESS",av:14,lane:"links",kind:"patch",text:"fix: footer links open in the same tab",
+       code:"- <a href=\"/terms\">Terms</a>\n+ <a href=\"/terms\" target=\"_blank\" rel=\"noopener\">Terms</a>",
+       steps:"click any footer link",sev:"low",status:"merged",plus:["SAM","AUNY"],replies:[]},
+      {id:3,by:"SAM",av:8,lane:"mobile",kind:"bug",text:"nav overlaps the logo under 400px",steps:"resize to 375, look at the header",sev:"high",status:"open",plus:["MARCO"],replies:[]},
+      {id:2,by:"AUNY",av:3,lane:"forms",kind:"feature",text:"let people paste a whole address instead of five fields",steps:"",sev:"med",status:"open",plus:[],replies:[]},
+      {id:1,by:"AUNY",av:3,lane:"forms",kind:"bug",text:"double-clicking submit sends the form twice",steps:"fill it in, double click submit, check your inbox",sev:"high",status:"open",plus:["SAM","JESS","MARCO"],replies:[{by:"SAM",text:"got two emails, confirmed"}]}
+    ],
+    plan:[{id:1,text:"debounce the submit button before anything else",by:"AUNY",done:false},
+      {id:2,text:"pick a CTA colour that passes AA on the hero",by:"MARCO",done:false},
+      {id:3,text:"ship jess's footer patch",by:"JESS",done:true}],
+    strokes:[],sid:0,msgs:[]
+  };
+  $("roomChip").textContent="demo board";
+  setTarget(LAST.target);
+  $("s0").className="screen solo";$("s1").className="screen hall on";
+  buildPickers();buildTabs();
+  drawRail();drawBrief();drawCrew();drawBoard();drawPlan();drawTabs();
+  $("clog").innerHTML='<div class="m sys"><div class="bd">demo board &middot; nothing here is live</div></div>'+
+    '<div class="m"><div class="nm">SAM</div><div class="bd">the header thing is on every page not just home</div></div>'+
+    '<div class="m find"><div class="nm">JESS</div><div class="bd">PATCH: fix: footer links open in the same tab</div></div>'+
+    '<div class="m"><div class="nm">MARCO</div><div class="bd">who has keyboard? nobody has touched it</div></div>';
+  window.scrollTo(0,0);
+});
+
+/* ---------- the field: chalk dust that opens into eyes, kept out of the way ---------- */
+var cv=$("field"),ctx=cv.getContext("2d"),W=0,H=0,DPR=1,PTS=[],MX=-9e9,MY=-9e9,TX=0,TY=0,ON=0,QUIET=0;
+function seedF(){
+  PTS=[];var n=Math.round(Math.min(120,Math.max(40,(W*H)/16000)));
+  for(var i=0;i<n;i++)PTS.push({x:Math.random(),y:Math.random(),r:.4+Math.random()*1.4,
+    ph:Math.random()*6.28,sp:.15+Math.random()*.45,tw:Math.random(),dx:0,dy:0});
+}
+function resizeF(){
+  DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
+  cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
+  cv.style.width=W+"px";cv.style.height=H+"px";ctx.setTransform(DPR,0,0,DPR,0,0);seedF();
+}
+addEventListener("resize",resizeF);
+addEventListener("mousemove",function(e){TX=e.clientX;TY=e.clientY;ON=1;},{passive:true});
+/* codex was right: it must not compete while you are typing or drawing */
+addEventListener("focusin",function(e){
+  var t=e.target.tagName;if(t==="INPUT"||t==="TEXTAREA")QUIET=1;
+});
+addEventListener("focusout",function(){QUIET=0;});
+document.addEventListener("visibilitychange",function(){QUIET=document.hidden?1:0;});
+function tickF(t){
+  ctx.clearRect(0,0,W,H);
+  if(QUIET){requestAnimationFrame(tickF);return;}
+  if(ON){MX+=(TX-MX)*.12;MY+=(TY-MY)*.12;}
+  for(var i=0;i<PTS.length;i++){
+    var p=PTS[i],bx=p.x*W,by=p.y*H;
+    var ddx=bx-MX,ddy=by-MY,d2=ddx*ddx+ddy*ddy,near=0;
+    if(ON&&d2<36000){var d=Math.sqrt(d2)||1;near=1-d/190;p.dx+=(ddx/d)*near*1.5;p.dy+=(ddy/d)*near*1.5;}
+    p.dx*=.9;p.dy*=.9;
+    var x=bx+p.dx,y=by+p.dy,pulse=.55+.45*Math.sin(t/1000*p.sp+p.ph);
+    ctx.beginPath();ctx.arc(x,y,p.r+near*.9,0,6.283);
+    ctx.fillStyle="rgba(237,230,216,"+Math.min(.6,(.05+.14*pulse)+near*.35).toFixed(3)+")";ctx.fill();
+    if(p.tw<.22){
+      var s=p.r*3,o=Math.min(.6,(.10+.16*pulse)+near*.3);
+      ctx.strokeStyle="rgba(255,107,26,"+o.toFixed(3)+")";ctx.lineWidth=.7;
+      ctx.beginPath();ctx.moveTo(x-s,y);ctx.quadraticCurveTo(x,y-s*.62,x+s,y);
+      ctx.quadraticCurveTo(x,y+s*.62,x-s,y);ctx.stroke();
+      var px=0,py=0;
+      if(ON){var vx=MX-x,vy=MY-y,vl=Math.sqrt(vx*vx+vy*vy)||1,rr=Math.min(1,vl/420);
+        px=(vx/vl)*s*.34*rr;py=(vy/vl)*s*.22*rr;}
+      ctx.beginPath();ctx.arc(x+px,y+py,s*.26,0,6.283);
+      ctx.fillStyle="rgba(255,107,26,"+(o*.8).toFixed(3)+")";ctx.fill();
+    }
+  }
+  requestAnimationFrame(tickF);
+}
+resizeF();requestAnimationFrame(tickF);
+</script>

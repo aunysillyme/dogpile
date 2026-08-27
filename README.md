@@ -1,0 +1,42 @@
+# Dogpile
+
+Group red-teaming that stops the pile-on.
+
+**Play:** https://aunysillyme.github.io/dogpile/
+
+Five people thrash a site and four of them poke the same hero button, while most
+of the thing never gets touched. A pile-on feels productive and covers nothing.
+
+Dogpile puts every person in a **different lane**, refuses a finding somebody
+already filed in different words, and keeps the untouched lanes lit so the crew
+can see what nobody has looked at.
+
+## How it works
+
+- **Lanes.** Ten of them (forms, small screen, links, edge input, the flow,
+  slow+cold, keyboard, words, look, what's missing). You are auto-assigned the
+  emptiest one. Tap any lane to take it instead.
+- **Coverage is inverted.** Covered lanes recede into steel. Untouched lanes stay
+  dashed and orange with "nobody tested this". The header counts lanes still dark,
+  not percent complete.
+- **The anti-dogpile gate.** Filing fingerprints your text and blocks it if it
+  collides with an existing finding. You either +1 theirs or say something new.
+- **Four kinds on one board:** BUG, FEATURE, DESIGN, PATCH. A patch carries real
+  code and renders as a diff you can copy. Findings have +1s, threaded replies,
+  and ship / not-a-bug status.
+- **Shared whiteboard**, a **plan** the crew agrees on, and chat.
+
+The target site opens in your own tab rather than an iframe, deliberately:
+`X-Frame-Options` blocks most real sites from being embedded, and this way logins
+and paywalled pages work too.
+
+## Design
+
+Two of my own art specs, mixed. **Sketchy** inverted - a loose hand-drawn
+sketchbook page, but chalk on a blackboard instead of pen on white paper.
+**Schitzo** supplies the law underneath: cold is the ground, the warm colour is
+the intrusion, and the surfaces watch you.
+
+Orange is urgency, never a category. The four kinds are told apart by silhouette.
+
+Built live in 30 minutes.
