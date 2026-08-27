@@ -1306,7 +1306,7 @@ function tickF(t){
     p.dx*=.9;p.dy*=.9;
     var x=bx+p.dx,y=by+p.dy,pulse=.55+.45*Math.sin(t/1000*p.sp+p.ph);
     ctx.beginPath();ctx.arc(x,y,p.r+near*.9,0,6.283);
-    ctx.fillStyle="rgba(237,230,216,"+Math.min(.5,(.06+.15*pulse)+near*.3).toFixed(3)+")";ctx.fill();
+    ctx.fillStyle="rgba(12,12,11,"+Math.min(.62,(.16+.26*pulse)+near*.3).toFixed(3)+")";ctx.fill();
     if(p.tw<.22){
       var s=p.r*3,o=Math.min(.6,(.10+.16*pulse)+near*.3);
       ctx.strokeStyle="rgba(255,107,26,"+o.toFixed(3)+")";ctx.lineWidth=.7;
