@@ -2,7 +2,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Group red-teaming that stops the pile-on. Everyone gets a different lane, nobody files the same bug twice, and the board shows what nobody has touched.">
-<meta name="theme-color" content="#2E2F2C">
+<meta name="theme-color" content="#3E3F3B">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Dogpile">
 <meta property="og:title" content="Dogpile &middot; red-team a site without all finding the same bug">
@@ -25,8 +25,8 @@
    Schitzo's law: cold is the ground, the warm colour is the intrusion.
    ORANGE IS URGENCY, NEVER A CATEGORY. Kinds are told apart by silhouette. */
 :root{
-  --void:#2E2F2C; --board:#373834;
-  --chalk:#EDE6D8; --dust:#A8A69B; --faint:#5C5D57;
+  --void:#3E3F3B; --board:#474844;
+  --chalk:#EDE6D8; --dust:#A8A69B; --faint:#6B6C65;
   --orange:#FF6B1A; --ember:#FFA45C;
   --violet:#8B5CF6; --vdim:#5B3FA8;
   --steel:#6E8598;
@@ -112,6 +112,13 @@ button.ghost:hover{color:var(--chalk);border-color:var(--dust)}
 /* ---- THE BOARD: findings as paper, pinned ---- */
 .deck{display:grid;grid-template-columns:minmax(0,1fr) 396px;gap:24px;align-items:start}
 @media(max-width:1000px){.deck{grid-template-columns:minmax(0,1fr)}}
+/* on a wide screen the side rail stops being a tower and sits two across */
+@media(min-width:1500px){
+  .hall{max-width:1720px}
+  .deck{grid-template-columns:minmax(0,1fr) 820px}
+  .deck .col.rail2{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+  .deck .col.rail2 .span2{grid-column:1 / -1}
+}
 .col{min-width:0}
 .sect{font-size:10px;letter-spacing:.24em;color:var(--faint);text-transform:uppercase;margin:0 0 12px;
   border-bottom:1px solid var(--faint);padding-bottom:7px;display:flex;gap:10px;align-items:baseline}
@@ -615,9 +622,9 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
       </div>
     </div>
 
-    <div class="col">
+    <div class="col rail2">
       <div class="sheet brief2 t1" id="brief"></div>
-      <div class="crew" id="crew"></div>
+      <div class="crew span2" id="crew"></div>
 
       <div class="botcard">
         <div class="bh">the reviewer</div>
@@ -642,13 +649,13 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
         <div id="gate"></div>
       </div>
 
-      <div class="sect" style="margin-top:26px">the crew</div>
-      <div class="tabs" id="tabs"></div>
-      <div class="pane" id="pane-board">
+      <div class="sect span2" style="margin-top:6px">the crew</div>
+      <div class="tabs span2" id="tabs"></div>
+      <div class="pane span2" id="pane-board">
         <canvas id="wb" width="760" height="680"></canvas>
         <div class="wbbar" id="wbbar"></div>
       </div>
-      <div class="pane" id="pane-notes">
+      <div class="pane span2" id="pane-notes">
         <div class="stickies" id="stickies"></div>
         <div class="stickybar">
           <div class="cpick" id="cpick"></div>
@@ -656,7 +663,7 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
           <button class="ghost" id="nadd">pin</button>
         </div>
       </div>
-      <div class="pane" id="pane-plan">
+      <div class="pane span2" id="pane-plan">
         <div class="plan paper">
           <div class="sl" style="font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--inkdim);margin-bottom:10px">what we're actually going to do</div>
           <div id="planList"></div>
@@ -666,7 +673,7 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
           </div>
         </div>
       </div>
-      <div class="pane on" id="pane-chat">
+      <div class="pane on span2" id="pane-chat">
         <div class="chat">
           <div class="clog" id="clog"></div>
           <div class="cbar">
@@ -1315,7 +1322,7 @@ function tickF(t){
     p.dx*=.9;p.dy*=.9;
     var x=bx+p.dx,y=by+p.dy,pulse=.55+.45*Math.sin(t/1000*p.sp+p.ph);
     ctx.beginPath();ctx.arc(x,y,p.r+near*.9,0,6.283);
-    ctx.fillStyle="rgba(12,12,11,"+Math.min(.62,(.16+.26*pulse)+near*.3).toFixed(3)+")";ctx.fill();
+    ctx.fillStyle="rgba(12,12,11,"+Math.min(.55,(.14+.24*pulse)+near*.3).toFixed(3)+")";ctx.fill();
     if(p.tw<.22){
       var s=p.r*3,o=Math.min(.6,(.10+.16*pulse)+near*.3);
       ctx.strokeStyle="rgba(255,107,26,"+o.toFixed(3)+")";ctx.lineWidth=.7;
