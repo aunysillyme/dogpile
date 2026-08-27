@@ -503,6 +503,11 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
   color:#0C0D0B;font-weight:700;flex:none;min-width:74px}
 .ar .what{color:#0A0B09;word-wrap:break-word;overflow-wrap:anywhere}
 .ar.bot .what{color:#3B2F5E}
+.flash{max-height:0;overflow:hidden;opacity:0;transition:max-height .2s,opacity .2s;
+  font-family:Kalam,cursive;font-weight:700;font-size:17px;color:#7A3007;margin:-14px 0 0}
+.flash.on{max-height:60px;opacity:1;margin:-14px 0 16px}
+.sheet.brief2 .swhint{font-size:12.5px;line-height:1.5;color:#1A1E24;margin-top:12px}
+.colCrew .chat{height:300px;margin-bottom:4px}
 .stickies{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:12px}
 .sticky{position:relative;padding:14px 12px 26px;font-family:Kalam,cursive;font-weight:700;font-size:16px;
   line-height:1.35;color:#13161B;box-shadow:3px 4px 0 rgba(25,26,23,.4);word-wrap:break-word;overflow-wrap:anywhere;min-height:104px}
@@ -641,6 +646,7 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
   </div>
   <div class="railwhat">A <b>lane</b> is one way of attacking the site. You only work yours, so between you the whole thing gets covered instead of four people poking the same button. Dashed and orange means <b>nobody has been there yet</b>.</div>
   <div class="rail" id="rail"></div>
+  <div class="flash" id="flash"></div>
 
   <div class="doors">
     <button class="door" data-door="bug"><div class="dt">report a bug</div>
@@ -708,8 +714,19 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
 
       <div class="sect">the crew</div>
       <div class="crew" id="crew"></div>
+
+      <div class="sect" style="margin-top:4px">group chat</div>
+      <div class="chat">
+        <div class="clog" id="clog"></div>
+        <div class="cbar">
+          <input id="cin" maxlength="240" placeholder="talk to the crew" autocomplete="off">
+          <button id="csend">say</button>
+        </div>
+      </div>
+
+      <div class="sect" style="margin-top:22px">everything else</div>
       <div class="tabs" id="tabs"></div>
-      <div class="pane" id="pane-act"><div class="acts" id="acts"></div></div>
+      <div class="pane on" id="pane-act"><div class="acts" id="acts"></div></div>
       <div class="pane" id="pane-notes">
         <div class="stickies" id="stickies"></div>
         <div class="stickybar">
@@ -732,15 +749,7 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
           </div>
         </div>
       </div>
-      <div class="pane on" id="pane-chat">
-        <div class="chat">
-          <div class="clog" id="clog"></div>
-          <div class="cbar">
-            <input id="cin" maxlength="240" placeholder="talk to the crew" autocomplete="off">
-            <button id="csend">say</button>
-          </div>
-        </div>
-      </div>
+
     </div>
 
   </div>
@@ -751,7 +760,7 @@ function esc(t){return String(t==null?"":t).replace(/[&<>"]/g,function(c){return
 
 var ME={id:null,name:null,room:null,lane:null};
 var LANES=[],KINDS={},LAST={players:[],finds:[],coverage:{},plan:[],strokes:[]};
-var SEEN=0,POLL=null,DEMO=false,KIND="bug",SEV="med",TAB="chat",SIDS=0,ACTS=[];
+var SEEN=0,POLL=null,DEMO=false,KIND="bug",SEV="med",TAB="act",SIDS=0,ACTS=[];
 
 /* ---------- room code ---------- */
 var WORDS=["THRASH","PILE","WRECK","SMOKE","CRASH","POKE","BREAK","STRESS","FUZZ","SHAKE"];
@@ -981,16 +990,21 @@ function drawRail(){
 }
 $("rail").addEventListener("click",function(e){
   var b=e.target.closest("[data-l]");if(!b||DEMO)return;
-  post("relane",{id:ME.id,lane:b.dataset.l}).then(function(){pull();});
+  var lab=(LANES.filter(function(l){return l.id===b.dataset.l;})[0]||{}).label||"";
+  post("relane",{id:ME.id,lane:b.dataset.l}).then(function(){
+    pull();flash("You claimed " + lab + ". It is yours and the crew can see it.");
+  });
 });
+function flash(msg){
+  var f=$("flash");if(!f)return;
+  f.textContent=msg;f.className="flash on";
+  clearTimeout(flash.t);flash.t=setTimeout(function(){f.className="flash";},3200);
+}
 function drawBrief(){
   var L=LANES.filter(function(l){return l.id===ME.lane;})[0];if(!L)return;
   $("brief").innerHTML='<div class="sl">your lane</div><div class="bl2">'+esc(L.label)+'</div>'+
     '<div class="bb2">'+esc(L.brief)+'</div>'+
-    '<div class="sl" style="margin-top:16px">switch to a different lane</div>'+
-    '<div class="swhint">Tap one and it becomes yours instead. The crew sees the change straight away.</div>'+
-    '<div class="sw2">'+LANES.filter(function(l){return l.id!==ME.lane;}).map(function(l){
-      return '<button data-l="'+l.id+'">'+esc(l.label)+'</button>';}).join("")+'</div>';
+    '<div class="swhint">To move, tap a different lane in the row above. Your name moves with you and the crew sees it.</div>';
 }
 $("brief").addEventListener("click",function(e){
   var b=e.target.closest("[data-l]");if(!b||DEMO)return;
@@ -1084,10 +1098,10 @@ $("board").addEventListener("keydown",function(e){
 
 /* ---------- tabs ---------- */
 function buildTabs(){
-  $("tabs").innerHTML=[["chat","CHAT"],["act","ACTIVITY"],["notes","STICKIES"],["board","WHITEBOARD"],["plan","THE PLAN"]].map(function(t){
+  $("tabs").innerHTML=[["act","ACTIVITY"],["notes","STICKIES"],["board","WHITEBOARD"],["plan","THE PLAN"]].map(function(t){
     return '<button data-t="'+t[0]+'"'+(t[0]===TAB?' class="on"':'')+'>'+t[1]+'<span class="n" id="n-'+t[0]+'"></span></button>';
   }).join("");
-  ["chat","act","notes","board","plan"].forEach(function(t){$("pane-"+t).className="pane"+(t===TAB?" on":"");});
+  ["act","notes","board","plan"].forEach(function(t){var el=$("pane-"+t);if(el)el.className="pane"+(t===TAB?" on":"");});
   buildWBbar();
 }
 function drawTabs(){
