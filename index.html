@@ -96,6 +96,21 @@ button.ghost:hover{color:var(--chalk);border-color:var(--dust)}
 .pl .claim{font-family:Kalam,cursive;font-weight:700;font-size:14px;color:#0A0B09;margin-top:5px}
 .pl:hover .claim{color:#B23A00}
 .pl.mine .claim{color:#8A3708}
+.switcher{display:none;gap:8px;align-items:center;flex-wrap:wrap;margin:-8px 0 18px;
+  background:var(--paper);padding:12px 14px;box-shadow:3px 4px 0 rgba(25,26,23,.42);position:relative}
+.switcher.on{display:flex}
+.switcher::after{content:"";position:absolute;top:-6px;left:22px;width:11px;height:11px;border-radius:50%;
+  background:#5B3FA8;border:1px solid #38246E}
+.switcher input{flex:1;min-width:240px;font-family:"Space Mono",monospace;font-size:14px;color:var(--ink);
+  background:transparent;border:0;border-bottom:1.5px dashed rgba(13,16,21,.4);padding:8px 2px;outline:none}
+.switcher input:focus{border-bottom-color:#B23A00;border-bottom-style:solid}
+.switcher input::placeholder{color:rgba(13,16,21,.5)}
+.switcher .ghost{background:transparent;border-color:rgba(13,16,21,.35);color:#1A1E24}
+.lanesrc{font-size:12px;color:#131410;margin:-6px 0 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.lanesrc b{font-weight:700}
+.lanesrc button{font-family:"Space Mono",monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  padding:5px 9px;background:rgba(255,255,255,.4);border:1px solid var(--faint);color:#0A0B09;cursor:pointer;font-weight:700}
+.lanesrc button:hover{border-color:#C24A00;color:#C24A00}
 .rail{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:24px}
 .rail .pl{flex:1 1 132px;max-width:210px}
 @media(max-width:560px){.rail .pl{flex:1 1 46%;max-width:none}}
@@ -640,6 +655,12 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
     <a class="opensite" id="tgtLink" href="#" target="_blank" rel="noopener noreferrer">
       open the site &#8599; <span class="u" id="tgtU"></span></a>
     <span class="nt">it opens in your own tab, so logins still work</span>
+    <button class="ghost" id="switchBtn">thrash a different url &#8594;</button>
+  </div>
+  <div class="switcher" id="switcher">
+    <input id="newTgt" maxlength="300" placeholder="paste the next url - the whole crew moves with you" autocomplete="off">
+    <button class="inkbtn" id="switchGo">move the crew</button>
+    <button class="ghost" id="switchCancel">never mind</button>
   </div>
 
   <div class="railhead">
@@ -647,6 +668,7 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
     <span class="sub">tap a lane to take it</span>
   </div>
   <div class="railwhat">A <b>lane</b> is one way of attacking the site. You only work yours, so between you the whole thing gets covered instead of four people poking the same button. Dashed and orange means <b>nobody has been there yet</b>.</div>
+  <div class="lanesrc" id="laneSrc"></div>
   <div class="rail" id="rail"></div>
   <div class="flash" id="flash"></div>
 
@@ -967,7 +989,7 @@ function paint(d){
   var mine=(d.players||[]).filter(function(p){return p.id===ME.id;})[0];
   if(mine)ME.lane=mine.lane;
   if(d.target)setTarget(d.target);
-  drawRail();drawBrief();drawCrew();drawBoard();drawPlan();drawNotes();drawActs();drawTabs();
+  drawRail();drawLaneSrc();drawBrief();drawCrew();drawBoard();drawPlan();drawNotes();drawActs();drawTabs();
   if(d.strokes&&d.sid!==SIDS){SIDS=d.sid;drawWB(d.strokes);}
   if(d.msgs&&d.msgs.length){
     var log=$("clog"),near=(log.scrollHeight-log.scrollTop-log.clientHeight)<90;
@@ -983,6 +1005,50 @@ function paint(d){
 }
 
 /* ---------- the rail: gaps stay bright ---------- */
+(function(){
+  var b=$("switchBtn"),box=$("switcher"),go=$("switchGo"),no=$("switchCancel"),inp=$("newTgt");
+  if(!b)return;
+  b.addEventListener("click",function(){
+    box.className="switcher on";inp.value="";inp.focus();
+  });
+  no.addEventListener("click",function(){box.className="switcher";});
+  function move(){
+    var t=inp.value.trim();
+    if(!t){inp.focus();return;}
+    if(DEMO){flash("Demo board - moving the crew only works in a real room.");box.className="switcher";return;}
+    go.disabled=true;go.textContent="moving...";
+    post("relanes",{id:ME.id,target:t}).then(function(r){
+      go.disabled=false;go.textContent="move the crew";
+      box.className="switcher";
+      if(r&&r.lanes){LANES=r.lanes;LAST.laneSrc=r.laneSrc;LAST.target=r.target;}
+      if(r&&r.target)setTarget(r.target);
+      pull();
+      flash("The crew is now on "+((r&&r.laneSrc)||t)+". Lanes rebuilt around it.");
+    }).catch(function(){go.disabled=false;go.textContent="move the crew";});
+  }
+  go.addEventListener("click",move);
+  inp.addEventListener("keydown",function(ev){if(ev.code==="Enter")move();});
+})();
+function drawLaneSrc(){
+  var el=$("laneSrc");if(!el)return;
+  var src=LAST.laneSrc||"";
+  var h=src
+    ? '<span>These <b>'+LANES.length+' lanes</b> were built from what is actually on <b>'+esc(src)+'</b> - its forms, links, media, and the rest.</span>'+
+      '<button data-relane="1">rebuild from the site</button>'
+    : '<span>Standard lanes. <b>Pull the site</b> and they rebuild around what it really has.</span>'+
+      '<button data-relane="1">build from the site</button>';
+  if(el.dataset.k!==h){el.innerHTML=h;el.dataset.k=h;}
+}
+document.addEventListener("click",function(e){
+  var b=e.target.closest("[data-relane]");if(!b||DEMO)return;
+  b.disabled=true;b.textContent="reading the site...";
+  post("relanes",{id:ME.id,target:LAST.target||""}).then(function(r){
+    b.disabled=false;
+    if(r&&r.lanes){LANES=r.lanes;LAST.laneSrc=r.laneSrc;}
+    pull();
+    flash(r&&r.ok?("Lanes rebuilt from "+(r.laneSrc||"the site")+"."):"Could not read that site, keeping the standard lanes.");
+  }).catch(function(){b.disabled=false;b.textContent="rebuild from the site";});
+});
 function drawRail(){
   var cov=LAST.coverage||{},gaps=0;
   var byLane={};

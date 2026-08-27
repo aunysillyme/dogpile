@@ -15,6 +15,64 @@ const LANES = [
   { id: "idea",    label: "WHAT'S MISSING", brief: "Not bugs. The feature that should obviously exist and does not." }
 ];
 
+
+/* Lanes are not a fixed menu. We read the actual page and hand out lanes for
+   what is really on it, plus the handful that apply to any site. */
+const BASE_LANES = [
+  { id: "mobile", label: "SMALL SCREEN", brief: "Narrow the window to 375px. What overflows, overlaps, or vanishes." },
+  { id: "a11y",   label: "KEYBOARD",     brief: "Tab only, no mouse. Focus visible? Can you escape? Can you finish?" },
+  { id: "slow",   label: "SLOW + COLD",  brief: "Hard reload, throttled, no cache. What breaks before it loads." },
+  { id: "copy",   label: "WORDS",        brief: "Typos, lies, stale prices, broken tone, unlabelled buttons." },
+  { id: "look",   label: "LOOK",         brief: "Colour, contrast, spacing, hierarchy. What is ugly and what is unreadable." },
+  { id: "idea",   label: "WHAT'S MISSING", brief: "Not bugs. The feature that should obviously exist and does not." }
+];
+
+function deriveLanes(html, url) {
+  const h = String(html || "");
+  const low = h.toLowerCase();
+  const found = [];
+  const count = (re) => (h.match(re) || []).length;
+  const has = (re) => re.test(h);
+
+  const forms = count(/<form\b/gi);
+  const inputs = count(/<input\b/gi);
+  const pw = has(/<input[^>]+type=["']password["']/i);
+  const search = has(/type=["']search["']/i) || has(/name=["'](q|s|search|query)["']/i);
+  const links = count(/<a\b[^>]*href=/gi);
+  const imgs = count(/<img\b/gi);
+  const media = count(/<(video|audio|iframe)\b/gi);
+  const tables = count(/<table\b/gi);
+  const buttons = count(/<button\b/gi);
+  const selects = count(/<select\b/gi);
+  const commerce = /\b(cart|checkout|add to (bag|cart)|basket|\$[0-9]|price|pricing|subscribe|buy now)\b/i.test(low);
+  const auth = pw || /\b(sign ?in|log ?in|sign ?up|register|create account)\b/i.test(low);
+  const upload = has(/type=["']file["']/i);
+  const map = /\b(map|leaflet|mapbox|google\.com\/maps)\b/i.test(low);
+  const dates = has(/type=["']date(time)?(-local)?["']/i) || /\b(calendar|datepicker|book a|reservation)\b/i.test(low);
+
+  if (auth) found.push({ id: "auth", label: "SIGN IN", brief: "Wrong password, empty fields, reset flow, what the error message leaks." });
+  if (forms || inputs > 2) found.push({ id: "forms", label: "FORMS", brief: forms + " form(s), " + inputs + " input(s). Empty, huge, emoji, paste, tab order, double-submit." });
+  if (search) found.push({ id: "search", label: "SEARCH", brief: "Empty query, gibberish, one letter, 500 characters, quotes and slashes." });
+  if (commerce) found.push({ id: "buy", label: "THE MONEY BIT", brief: "Cart, prices, checkout. Quantity zero, negative, back button mid-flow." });
+  if (upload) found.push({ id: "upload", label: "UPLOADS", brief: "Wrong file type, enormous file, zero-byte file, cancel halfway." });
+  if (dates) found.push({ id: "dates", label: "DATES", brief: "Yesterday, year 1900, year 3000, end before start, other timezones." });
+  if (selects > 1) found.push({ id: "selects", label: "DROPDOWNS", brief: selects + " of them. Default values, keyboard opening, options that should be disabled." });
+  if (tables) found.push({ id: "tables", label: "TABLES", brief: tables + " table(s). Sorting, empty state, long values, what happens narrow." });
+  if (media) found.push({ id: "media", label: "MEDIA", brief: media + " embed(s). Autoplay, no sound, slow network, does it block the page." });
+  if (links > 12) found.push({ id: "links", label: "LINKS", brief: links + " links on this page. Dead ends, wrong tabs, 404s, back button." });
+  if (imgs > 3) found.push({ id: "imgs", label: "IMAGES", brief: imgs + " images. Broken sources, alt text, layout shift, huge files." });
+  if (buttons > 2) found.push({ id: "flow", label: "THE FLOW", brief: "The one thing this site is FOR. Do it start to finish. Then do it wrong." });
+  found.push({ id: "edge", label: "EDGE INPUT", brief: "Absurd values anywhere they are accepted. Negative, zero, 10k chars, script tags, unicode." });
+
+  const seen = {};
+  const all = found.concat(BASE_LANES).filter((l) => {
+    if (seen[l.id]) return false;
+    seen[l.id] = 1;
+    return true;
+  });
+  return all.slice(0, 14);
+}
+
 const SEV = { low: 1, med: 2, high: 3 };
 
 const KINDS = {
@@ -148,7 +206,7 @@ export class Room extends DurableObject {
     ctx.blockConcurrencyWhile(async () => {
       this.s = (await ctx.storage.get("s")) || {
         target: "", players: [], finds: [], msgs: [], seq: 0, fid: 0, started: 0,
-        strokes: [], sid: 0, plan: [], pid: 0, notes: [], nid: 0
+        strokes: [], sid: 0, plan: [], pid: 0, notes: [], nid: 0, lanes: null, laneSrc: ""
       };
       if (!this.s.notes) { this.s.notes = []; this.s.nid = 0; }
       if (!this.s.strokes) { this.s.strokes = []; this.s.sid = 0; }
@@ -166,12 +224,15 @@ export class Room extends DurableObject {
   p(id) { return this.s.players.find((x) => x.id === id) || null; }
 
   /* hand out the emptiest lane, so coverage spreads instead of clumping */
+  L() { return (this.s.lanes && this.s.lanes.length) ? this.s.lanes : LANES; }
+
   assignLane() {
     const count = {};
-    LANES.forEach((l) => { count[l.id] = 0; });
+    this.L().forEach((l) => { count[l.id] = 0; });
     this.s.players.forEach((p) => { if (p.lane) count[p.lane] = (count[p.lane] || 0) + 1; });
-    let best = LANES[0].id, low = Infinity;
-    for (const l of LANES) {
+    const LL = this.L();
+    let best = LL[0].id, low = Infinity;
+    for (const l of LL) {
       if (count[l.id] < low) { low = count[l.id]; best = l.id; }
     }
     return best;
@@ -179,7 +240,7 @@ export class Room extends DurableObject {
 
   coverage() {
     const out = {};
-    LANES.forEach((l) => { out[l.id] = { finds: 0, people: 0 }; });
+    this.L().forEach((l) => { out[l.id] = { finds: 0, people: 0 }; });
     this.s.players.forEach((p) => { if (p.lane && out[p.lane]) out[p.lane].people += 1; });
     this.s.finds.forEach((f) => { if (out[f.lane]) out[f.lane].finds += 1; });
     return out;
@@ -223,6 +284,32 @@ export class Room extends DurableObject {
     } catch (e) { return null; }
   }
 
+  async buildLanes() {
+    const s = this.s;
+    if (!s.target) return false;
+    let host = "";
+    try { host = new URL(s.target).hostname; } catch (e) { return false; }
+    if (/^(localhost|127\.|0\.|10\.|192\.168\.|169\.254\.)/i.test(host)) return false;
+    try {
+      const res = await fetch(s.target, {
+        headers: { "user-agent": "Mozilla/5.0 (compatible; DogpileBot/1.0)" }, redirect: "follow"
+      });
+      const html = (await res.text()).slice(0, 300000);
+      const lanes = deriveLanes(html, s.target);
+      if (!lanes.length) return false;
+      s.lanes = lanes;
+      s.laneSrc = host;
+      const ids = {};
+      lanes.forEach((l) => { ids[l.id] = 1; });
+      s.players.forEach((p) => { if (!ids[p.lane]) p.lane = this.assignLane(); });
+      this.push("SYS", lanes.length + " lanes built from what is actually on " + host, "sys");
+      return true;
+    } catch (e) {
+      this.push("SYS", "could not read the target, using the standard lanes", "sys");
+      return false;
+    }
+  }
+
   async fetch(req) {
     const url = new URL(req.url);
     const parts = url.pathname.split("/").filter(Boolean);
@@ -235,7 +322,8 @@ export class Room extends DurableObject {
         target: s.target,
         started: s.started,
         seq: s.seq,
-        lanes: LANES,
+        lanes: this.L(),
+        laneSrc: s.laneSrc || "",
         kinds: KINDS,
         coverage: this.coverage(),
         players: s.players.map((p) => ({ id: p.id, name: p.name, lane: p.lane, av: p.av || 0, finds: p.finds || 0 })),
@@ -262,7 +350,7 @@ export class Room extends DurableObject {
         for (let k = 0; k < 24 && taken.indexOf(av) >= 0; k++) av = (av + 1) % 24;
         p = { id: crypto.randomUUID().slice(0, 8), name, av, lane: this.assignLane(), finds: 0 };
         s.players.push(p);
-        const L = LANES.find((l) => l.id === p.lane);
+        const L = this.L().find((l) => l.id === p.lane);
         this.push("SYS", name + " took " + (L ? L.label : p.lane), "sys");
       }
       const t = clean(b.target, 300);
@@ -270,18 +358,19 @@ export class Room extends DurableObject {
         s.target = /^https?:\/\//i.test(t) ? t : "https://" + t;
         s.started = 1;
         this.push("SYS", "target locked: " + s.target, "sys");
+        await this.buildLanes();
       }
       await this.save();
-      return json({ id: p.id, name: p.name, lane: p.lane, target: s.target, lanes: LANES });
+      return json({ id: p.id, name: p.name, lane: p.lane, target: s.target, lanes: this.L() });
     }
 
     if (act === "relane") {
       const p = this.p(clean(b.id, 40));
       if (!p) return json({ error: "not in room" }, 403);
       const want = clean(b.lane, 20);
-      if (!LANES.find((l) => l.id === want)) return json({ error: "no such lane" }, 400);
+      if (!this.L().find((l) => l.id === want)) return json({ error: "no such lane" }, 400);
       p.lane = want;
-      const L = LANES.find((l) => l.id === want);
+      const L = this.L().find((l) => l.id === want);
       this.push("SYS", p.name + " moved to " + L.label, "sys");
       await this.save();
       return json({ ok: true, lane: p.lane });
@@ -475,6 +564,20 @@ export class Room extends DurableObject {
       return json({ ok: true, plan: s.plan });
     }
 
+    if (act === "relanes") {
+      const p = this.p(clean(b.id, 40));
+      if (!p) return json({ error: "not in room" }, 403);
+      const t = clean(b.target, 300);
+      if (t) {
+        s.target = /^https?:\/\//i.test(t) ? t : "https://" + t;
+        s.started = 1;
+        this.push("SYS", p.name + " pointed the crew at " + s.target, "sys");
+      }
+      const ok = await this.buildLanes();
+      await this.save();
+      return json({ ok: ok, lanes: this.L(), laneSrc: s.laneSrc, target: s.target });
+    }
+
     if (act === "sweep") {
       const p = this.p(clean(b.id, 40));
       if (!p) return json({ error: "not in room" }, 403);
@@ -583,7 +686,7 @@ export class Room extends DurableObject {
         let said = null;
         if (E2 && E2.AI) {
           const recent = s.finds.slice(0, 4).map((f) => "#" + f.id + " [" + f.kind + "] " + f.text).join("\n");
-          const gaps = LANES.filter((l) => {
+          const gaps = this.L().filter((l) => {
             const c = this.coverage()[l.id];
             return c && c.people === 0 && c.finds === 0;
           }).map((l) => l.label);
