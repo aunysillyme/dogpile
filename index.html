@@ -100,8 +100,14 @@ button.ghost:hover{color:var(--chalk);border-color:var(--dust)}
 .pl.held .hole{background:var(--vdim);border-color:var(--violet)}
 .pl.mine{box-shadow:inset 0 0 24px rgba(255,107,26,.12);border-color:var(--orange)}
 .pl.mine .pn{color:var(--orange)}
-.pl:hover{border-color:var(--chalk)}
-.pl:hover .pn{color:var(--chalk)}
+.pl:hover{background:var(--paper);border-color:var(--paper);border-style:solid;
+  box-shadow:3px 4px 0 rgba(0,0,0,.5)}
+.pl:hover .pn{color:var(--ink)}
+.pl:hover .pc{color:var(--inkdim)}
+.pl:hover .hole{background:var(--paper);border-color:rgba(13,16,21,.45)}
+.pl.gap:hover .pn{color:#B23A00}
+.pl.gap:hover .pc{color:#B23A00}
+.pl.mine:hover{box-shadow:3px 4px 0 rgba(255,107,26,.55)}
 
 /* ---- THE BOARD: findings as paper, pinned ---- */
 .deck{display:grid;grid-template-columns:minmax(0,1fr) 396px;gap:24px;align-items:start}
@@ -418,7 +424,7 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
 .door:nth-child(3){transform:rotate(-.35deg)}
 .door::after{content:"";position:absolute;top:-6px;left:20px;width:11px;height:11px;border-radius:50%;
   background:var(--vdim);border:1px solid #2A1F49;box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.45)}
-.door:hover{box-shadow:4px 6px 0 rgba(255,107,26,.6)}
+.door:hover{box-shadow:4px 6px 0 rgba(255,107,26,.6);transform:translateY(-2px) rotate(0deg)}
 .door:hover::after{background:var(--orange);border-color:#8A3708}
 .door .dt{font-family:Anton,sans-serif;font-size:19px;text-transform:uppercase;letter-spacing:.03em;
   line-height:1.02;display:flex;align-items:center;gap:8px;margin-bottom:4px}
@@ -427,7 +433,10 @@ button.stamp.sm{font-size:clamp(19px,3.6vw,25px);padding:12px 16px;margin-top:18
 .door.pr::after{display:none}
 .door.pr .dt{color:var(--violet)}
 .door.pr .dd{color:var(--dust)}
-.door.pr:hover{border-color:var(--orange);box-shadow:none}
+.door.pr:hover{background:var(--paper);border-color:var(--paper);border-style:solid;
+  box-shadow:4px 5px 0 rgba(255,107,26,.55);transform:translateY(-2px)}
+.door.pr:hover .dt{color:#B23A00}
+.door.pr:hover .dd{color:var(--inkdim)}
 .door.pr:hover .dt{color:var(--orange)}
 
 /* ---- the pull request bench ---- */
