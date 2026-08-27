@@ -2,6 +2,8 @@
 
 Group red-teaming that stops the pile-on.
 
+🏆 **Winner, Cortex Research Group Season 2 Episode 3 - Group Thrashing.** 4.4 / 105 pts.
+
 **Play:** https://aunysillyme.github.io/dogpile/
 
 Five people thrash a site and four of them poke the same hero button, while most
