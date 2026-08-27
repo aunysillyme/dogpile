@@ -237,30 +237,137 @@ button.ghost:hover{color:var(--chalk);border-color:var(--dust)}
 .gate .dq b{color:var(--dust);font-weight:400;font-size:10px;letter-spacing:.12em;text-transform:uppercase;display:block;margin-top:3px}
 .empty{font-size:13px;color:var(--faint);padding:8px 0;line-height:1.6}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.pin:hover{transform:none}}
+
+/* ---- THE LANDING IS THE BOARD ITSELF ----
+   Not a centred column with a hero. An empty corkboard with the intake slip
+   pinned to it and the pitch written on scraps around it. Everything is paper,
+   so the whole surface inverts from yesterday's dark stacked form. */
+.corkwrap{max-width:1180px;margin:0 auto;padding:18px 18px 80px}
+.cork{display:grid;grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);gap:26px;align-items:start;margin-top:6px}
+@media(max-width:900px){.cork{grid-template-columns:minmax(0,1fr);gap:18px}}
+
+/* the intake slip: a real paper form, dark ink on chalk */
+.slip{position:relative;background:var(--paper);color:var(--ink);padding:24px 24px 26px;
+  box-shadow:5px 6px 0 rgba(0,0,0,.6);transform:rotate(-.5deg)}
+.slip::after{content:"";position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+  width:15px;height:15px;border-radius:50%;background:var(--orange);border:1px solid #8A3708;
+  box-shadow:inset 2px 2px 0 rgba(255,255,255,.5)}
+.slip .sh{font-family:Anton,sans-serif;font-size:clamp(30px,6vw,46px);text-transform:uppercase;
+  line-height:.92;color:var(--ink);margin-bottom:3px}
+.slip .sh em{font-style:normal;color:#B23A00}
+.slip .ss{font-family:Kalam,cursive;font-weight:700;font-size:19px;color:var(--inkdim);
+  margin-bottom:20px;transform:rotate(-.7deg)}
+.slip .fl{font-family:"Space Mono",monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--inkdim);margin:16px 0 3px}
+.slip .fl:first-of-type{margin-top:0}
+.slip input.p{width:100%;font-family:"Space Mono",monospace;font-size:15px;color:var(--ink);
+  background:transparent;border:0;border-bottom:1.5px dashed rgba(13,16,21,.38);padding:7px 2px;outline:none;letter-spacing:.01em}
+.slip input.p:focus{border-bottom-color:#B23A00;border-bottom-style:solid}
+.slip input.p::placeholder{color:rgba(13,16,21,.34)}
+.slip .rowin{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}
+.slip .roll{font-family:Kalam,cursive;font-weight:700;font-size:15px;background:transparent;border:0;
+  color:var(--inkdim);cursor:pointer;text-decoration:underline;text-decoration-style:dotted;padding:6px 2px;white-space:nowrap}
+.slip .roll:hover{color:#B23A00}
+.slip .share{font-family:"Space Mono",monospace;font-size:11px;color:var(--inkdim);margin-top:9px;line-height:1.5;word-break:break-all}
+.slip .share b{color:var(--ink);font-weight:700}
+button.stamp{font-family:Anton,sans-serif;font-size:clamp(22px,4.6vw,30px);text-transform:uppercase;letter-spacing:.04em;
+  width:100%;margin-top:22px;padding:14px 18px;cursor:pointer;color:var(--paper);background:var(--ink);
+  border:2px solid var(--ink);box-shadow:4px 4px 0 rgba(255,107,26,.85)}
+button.stamp:hover{background:#B23A00;border-color:#B23A00;box-shadow:4px 4px 0 rgba(13,16,21,.6)}
+button.stamp:disabled{opacity:.4;cursor:not-allowed}
+.slip .er{color:#B23A00;font-size:12.5px;min-height:17px;margin-top:8px;font-family:"Space Mono",monospace}
+
+/* the pitch, written on scraps pinned around the slip */
+.scraps{display:flex;flex-direction:column;gap:15px;padding-top:6px}
+.scrap{position:relative;background:var(--paper);color:var(--ink);padding:14px 15px 13px;
+  box-shadow:3px 4px 0 rgba(0,0,0,.55);font-size:14px;line-height:1.5}
+.scrap::after{content:"";position:absolute;top:-6px;width:11px;height:11px;border-radius:50%;
+  background:var(--vdim);border:1px solid #2A1F49;box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.45)}
+.scrap:nth-child(odd){transform:rotate(.7deg)}
+.scrap:nth-child(odd)::after{left:26px}
+.scrap:nth-child(even){transform:rotate(-.8deg)}
+.scrap:nth-child(even)::after{right:26px}
+.scrap .st{font-family:Anton,sans-serif;font-size:20px;text-transform:uppercase;letter-spacing:.03em;
+  line-height:1.02;margin-bottom:5px;display:flex;align-items:center;gap:8px}
+.scrap .st svg{flex:none}
+.scrap p{margin:0;color:var(--inkdim);font-size:13.5px;line-height:1.55}
+.scrap p b{color:var(--ink);font-weight:700}
+.scrap .hw{font-family:Kalam,cursive;font-weight:700;font-size:15px;color:#B23A00;
+  display:block;margin-top:7px;transform:rotate(-.6deg)}
+.scrap.dim{background:transparent;color:var(--dust);box-shadow:none;border:1px dashed var(--faint);transform:none}
+.scrap.dim::after{display:none}
+.scrap.dim .st{color:var(--orange);font-size:17px}
+.scrap.dim p{color:var(--dust)}
+
+.cork .foot{margin-top:20px;display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.cork .fnote{font-size:11.5px;color:var(--faint);line-height:1.6}
 </style>
 
 <canvas id="field"></canvas>
 <div class="wrap">
 
-<div class="screen on solo" id="s0">
+<div class="screen on corkwrap" id="s0">
   <div class="mast">
     <button class="w" id="home0">DOG<i>PILE</i></button>
-    <div class="chip">group thrashing</div>
+    <div class="chip">season 2 &middot; group thrashing</div>
   </div>
-  <h1 class="hero">everyone<i>found the same bug</i></h1>
-  <p class="lede">Five people red-team a site and four of them poke the same hero button, while <b>most of the thing never gets touched</b>. A pile-on feels productive and covers nothing.</p>
-  <p class="lede">Dogpile puts every person in a <b>different lane</b>, refuses a finding somebody already filed, and keeps the gaps lit so the crew can see <b>what nobody has looked at</b>. Bugs, feature ideas, colour changes and actual code patches all go on the same board.</p>
 
-  <div class="lbl">the site you're thrashing</div>
-  <input class="t" id="tgt" placeholder="paste any url - it opens in your own tab, so logins and paywalls still work">
-  <div class="lbl">your name</div>
-  <input class="t" id="nm" maxlength="14" placeholder="what the crew calls you">
-  <div class="lbl">room <span class="opt">already made for you</span></div>
-  <input class="t" id="rc" maxlength="10">
-  <div class="note" id="shareNow"></div>
-  <button class="go" id="enter">open the board</button>
-  <div class="err" id="e0"></div>
-  <div class="stack"><button class="ghost" id="demo">show me a board mid-thrash</button></div>
+  <div class="cork">
+
+    <div class="slip">
+      <div class="sh">thrash <em>a site</em></div>
+      <div class="ss">point a crew at any url and take it apart</div>
+
+      <div class="fl">the site you're thrashing</div>
+      <input class="p" id="tgt" placeholder="paste any url">
+
+      <div class="fl">your name</div>
+      <input class="p" id="nm" maxlength="14" placeholder="what the crew calls you">
+
+      <div class="fl">room</div>
+      <div class="rowin">
+        <input class="p" id="rc" maxlength="10">
+        <button class="roll" id="reroll">roll another &#8635;</button>
+      </div>
+      <div class="share" id="shareNow"></div>
+
+      <button class="stamp" id="enter">open the board</button>
+      <div class="er" id="e0"></div>
+    </div>
+
+    <div class="scraps">
+      <div class="scrap">
+        <div class="st">everyone gets a lane</div>
+        <p>Ten of them. Forms, small screen, keyboard, edge input, the flow. You get handed the emptiest one, so a mob turns into <b>coverage</b> instead of four people poking the same button.</p>
+        <span class="hw">nobody picks the easy bit</span>
+      </div>
+      <div class="scrap">
+        <div class="st">nobody files it twice</div>
+        <p>Report something the room already has and it stops you, shows you theirs, and makes you either <b>+1 it or say something new</b>. Same bug in different words still collides.</p>
+        <span class="hw">the pile-on dies here</span>
+      </div>
+      <div class="scrap">
+        <div class="st">the gaps stay lit</div>
+        <p>Covered lanes go quiet. Untouched ones stay dashed and orange. The header counts <b>lanes still dark</b>, never percent done, because the gap is the useful number.</p>
+        <span class="hw">3 lanes still dark &#8600;</span>
+      </div>
+      <div class="scrap">
+        <div class="st">bugs aren't the only thing</div>
+        <p>Feature ideas, colour changes and <b>actual code patches</b> pin to the same board. A patch renders as a diff anyone can copy, and gets shipped or closed like a PR.</p>
+        <span class="hw">plus a whiteboard + a plan</span>
+      </div>
+      <div class="scrap dim">
+        <div class="st">it opens in your own tab</div>
+        <p>No iframe, on purpose. Most real sites refuse to be embedded, and this way your logins and paywalled pages work too.</p>
+      </div>
+
+      <div class="foot">
+        <button class="ghost" id="demo">show me a board mid-thrash</button>
+      </div>
+      <div class="fnote">No signup, no accounts. Anyone with the link is in.</div>
+    </div>
+
+  </div>
 </div>
 
 <div class="screen hall" id="s1">
@@ -347,8 +454,11 @@ try{
   var h=(location.hash||"").replace("#","").toUpperCase().replace(/[^A-Z0-9]/g,"");
   $("rc").value=h||newCode();setRoomInUrl($("rc").value);
 }catch(e){$("rc").value=newCode();}
-function shareLine(){$("shareNow").innerHTML="Send this and they land on your board: <b>"+esc(inviteUrl().replace(/^https?:\/\//,""))+"</b>";}
+function shareLine(){$("shareNow").innerHTML="send this &#8594; <b>"+esc(inviteUrl().replace(/^https?:\/\//,""))+"</b>";}
 shareLine();
+$("reroll").addEventListener("click",function(){
+  $("rc").value=newCode();setRoomInUrl($("rc").value);shareLine();
+});
 $("rc").addEventListener("input",function(){
   var v=$("rc").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"");if(v)setRoomInUrl(v);shareLine();
 });
@@ -408,7 +518,7 @@ $("enter").addEventListener("click",function(){
     setRoomInUrl(rc);
     $("roomChip").textContent="room "+rc;
     setTarget(r.target);
-    $("s0").className="screen solo";$("s1").className="screen hall on";
+    $("s0").className="screen corkwrap";$("s1").className="screen hall on";
     buildPickers();buildTabs();startPoll();window.scrollTo(0,0);
   }).catch(function(){$("enter").disabled=false;$("e0").textContent="could not reach the room";});
 });
@@ -732,7 +842,7 @@ $("cin").addEventListener("keydown",function(ev){if(ev.code==="Enter")say();});
 
 /* ---------- home ---------- */
 function goHome(){
-  $("s1").className="screen hall";$("s0").className="screen solo on";window.scrollTo(0,0);
+  $("s1").className="screen hall";$("s0").className="screen corkwrap on";window.scrollTo(0,0);
   if(ME.room)$("rc").value=ME.room;if(ME.name)$("nm").value=ME.name;shareLine();
 }
 ["home0","home1"].forEach(function(i){var e=$(i);if(e)e.addEventListener("click",goHome);});
@@ -775,7 +885,7 @@ $("demo").addEventListener("click",function(){
   };
   $("roomChip").textContent="demo board";
   setTarget(LAST.target);
-  $("s0").className="screen solo";$("s1").className="screen hall on";
+  $("s0").className="screen corkwrap";$("s1").className="screen hall on";
   buildPickers();buildTabs();
   drawRail();drawBrief();drawCrew();drawBoard();drawPlan();drawTabs();
   $("clog").innerHTML='<div class="m sys"><div class="bd">demo board &middot; nothing here is live</div></div>'+
