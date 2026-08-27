@@ -111,10 +111,10 @@ button.ghost:hover{color:var(--chalk);border-color:var(--dust)}
 .lanesrc button{font-family:"Space Mono",monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
   padding:5px 9px;background:rgba(255,255,255,.4);border:1px solid var(--faint);color:#0A0B09;cursor:pointer;font-weight:700}
 .lanesrc button:hover{border-color:#C24A00;color:#C24A00}
-.rail{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:24px}
-.rail .pl{flex:1 1 132px;max-width:210px}
-@media(max-width:560px){.rail .pl{flex:1 1 46%;max-width:none}}
-@media(max-width:560px){.rail{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.rail{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:0 auto 24px;max-width:932px}
+.rail .pl{width:100%}
+@media(max-width:1000px){.rail{grid-template-columns:repeat(3,minmax(0,1fr));max-width:576px}}
+@media(max-width:560px){.rail{grid-template-columns:repeat(2,minmax(0,1fr));max-width:none}}
 .pl{position:relative;text-align:left;padding:11px 10px 12px;cursor:pointer;background:rgba(255,255,255,.28);font-family:inherit;
   border:1px solid var(--faint);color:var(--dust)}
 .pl .pn{font-family:Anton,sans-serif;font-size:15px;text-transform:uppercase;letter-spacing:.04em;line-height:1.05;color:#3F4A55}
@@ -696,6 +696,36 @@ button.ghost:hover{color:#B23A00;box-shadow:3px 4px 0 rgba(25,26,23,.45)}
 .ghnote{font-size:11px;color:#3A4048;line-height:1.5;margin-top:7px}
 .pin .byava{width:18px;height:18px;border-radius:50%;object-fit:cover;vertical-align:-4px;margin-right:5px;
   border:1px solid rgba(13,16,21,.3)}
+/* ---- the room already has a site: say so before they walk in ---- */
+.joinnote{font-size:12.5px;line-height:1.55;color:var(--ink);background:rgba(91,63,168,.1);
+  border-left:2px solid var(--violet);padding:9px 11px;margin-top:9px;display:none}
+.joinnote.on{display:block}
+.joinnote b{font-weight:700}
+.joinnote em{font-style:normal;font-family:"Space Mono",monospace;font-size:11.5px;color:#3B2A6B}
+
+/* ---- the archive: handled findings, off the board but not gone ---- */
+.arch{max-width:1000px;margin:34px auto 0;text-align:center}
+.archhead{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:#0A0B09;font-weight:700;display:inline-flex;align-items:center;gap:9px;margin-bottom:4px}
+.archhead b{font-family:Anton,sans-serif;font-size:17px;letter-spacing:.02em;color:var(--orange)}
+.archwhat{font-size:12px;color:#131410;margin-bottom:14px}
+.archrow{display:flex;flex-wrap:wrap;gap:9px;justify-content:center}
+.ac{position:relative;background:var(--paper);color:var(--ink);text-align:left;padding:9px 11px 10px;
+  width:228px;box-shadow:2px 3px 0 rgba(25,26,23,.3);opacity:.86}
+.ac:hover{opacity:1}
+.ac .at{font-family:"Space Mono",monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  font-weight:700;display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.ac.ship .at{color:#1F6B2E}
+.ac.shut .at{color:#6B6B64}
+.ac .ax{font-size:12.5px;line-height:1.45;color:#1A1E24;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.ac .ab{display:flex;align-items:center;gap:8px;margin-top:7px;font-family:"Space Mono",monospace;
+  font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#3A4048}
+.ac .ab button{margin-left:auto;font-family:"Space Mono",monospace;font-size:9px;letter-spacing:.1em;
+  text-transform:uppercase;font-weight:700;padding:4px 8px;cursor:pointer;background:transparent;
+  border:1px solid rgba(13,16,21,.4);color:var(--ink)}
+.ac .ab button:hover{border-color:#B23A00;color:#B23A00}
+.boardclear{font-family:Kalam,cursive;font-size:17px;color:#131410;text-align:center;padding:26px 10px}
 </style>
 
 <canvas id="field"></canvas>
@@ -725,6 +755,7 @@ button.ghost:hover{color:#B23A00;box-shadow:3px 4px 0 rgba(25,26,23,.45)}
         <button class="roll" id="reroll">roll another &#8635;</button>
       </div>
       <div class="share" id="shareNow"></div>
+      <div class="joinnote" id="joinNote"></div>
 
       <button class="stamp" id="enter">open the board</button>
       <div class="er" id="e0"></div>
@@ -829,6 +860,7 @@ button.ghost:hover{color:#B23A00;box-shadow:3px 4px 0 rgba(25,26,23,.45)}
         </div>
         <div class="empty">Nothing pinned yet. Go break something.</div>
       </div>
+      <div class="boardclear" id="boardClear" style="display:none">Board's clear. Everything filed has been shipped or shut &#8211; it's all in the archive down the bottom.</div>
     </div>
 
     <div class="col colFile">
@@ -899,6 +931,10 @@ button.ghost:hover{color:#B23A00;box-shadow:3px 4px 0 rgba(25,26,23,.45)}
     </div>
 
   </div>
+
+  <div class="arch" id="arch"></div>
+
+  </div>
 <script>
 var API="https://dogpile-room.aunysillyme.workers.dev";
 var $=function(i){return document.getElementById(i);};
@@ -908,22 +944,65 @@ var ME={id:null,name:null,room:null,lane:null};
 var LANES=[],KINDS={},LAST={players:[],finds:[],coverage:{},plan:[],strokes:[]};
 var SEEN=0,POLL=null,DEMO=false,KIND="bug",SEV="med",TAB="act",SIDS=0,ACTS=[];
 
-/* ---------- room code ---------- */
+/* ---------- room code: DERIVED FROM THE URL, so the two track each other ----------
+   Two people who type the same url land in the same room without swapping a code,
+   and one person with a code walks into that room's url. Same room, same board,
+   whichever half you were handed. Rolling one gives you a private room instead. */
 var WORDS=["THRASH","PILE","WRECK","SMOKE","CRASH","POKE","BREAK","STRESS","FUZZ","SHAKE"];
 function newCode(){return WORDS[Math.floor(Math.random()*WORDS.length)]+(10+Math.floor(Math.random()*89));}
+function normTarget(u){
+  return String(u||"").trim().toLowerCase()
+    .replace(/^https?:\/\//,"").replace(/^www\./,"").replace(/[\/?#]+$/,"");
+}
+function codeFor(u){
+  var t=normTarget(u); if(!t)return "";
+  var host=t.split("/")[0];
+  var lab=(host.split(".")[0]||"site").replace(/[^a-z0-9]/g,"").toUpperCase().slice(0,6)||"SITE";
+  var x=2166136261;
+  for(var i=0;i<t.length;i++){x^=t.charCodeAt(i);x=(x*16777619)>>>0;}
+  return lab+("00"+x.toString(36).toUpperCase()).slice(-3);
+}
+var CUSTOM=false,ROLLED=newCode();
 function setRoomInUrl(c){try{if(c)history.replaceState(null,"","#"+c);}catch(e){}}
-function inviteUrl(){return location.origin+location.pathname+"#"+($("rc").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"")||"");}
+function roomCode(){return $("rc").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"");}
+function inviteUrl(){return location.origin+location.pathname+"#"+roomCode();}
+function shareLine(){
+  $("shareNow").innerHTML=(CUSTOM?"private room &#8594; ":"send this &#8594; ")+
+    "<b>"+esc(inviteUrl().replace(/^https?:\/\//,""))+"</b>";
+}
+function syncCode(){
+  if(CUSTOM)return;
+  var c=codeFor($("tgt").value)||ROLLED;
+  $("rc").value=c;setRoomInUrl(c);shareLine();
+}
+/* someone arrived on a link: show them what that room is already thrashing */
+function peek(code){
+  if(!code)return;
+  fetch(API+"/r/"+code+"/state").then(function(r){return r.json();}).then(function(st){
+    if(!st||!st.target)return;
+    if(!$("tgt").value.trim()){$("tgt").value=st.target;}
+    var n=(st.players||[]).length,f=(st.finds||[]).length;
+    $("joinNote").className="joinnote on";
+    $("joinNote").innerHTML="This room is already on <b>"+esc(st.target.replace(/^https?:\/\//,""))+"</b>"+
+      "<br><em>"+n+(n===1?" person":" people")+" &middot; "+f+(f===1?" finding":" findings")+" on the board</em>";
+  }).catch(function(){});
+}
 try{
   var h=(location.hash||"").replace("#","").toUpperCase().replace(/[^A-Z0-9]/g,"");
-  $("rc").value=h||newCode();setRoomInUrl($("rc").value);
-}catch(e){$("rc").value=newCode();}
-function shareLine(){$("shareNow").innerHTML="send this &#8594; <b>"+esc(inviteUrl().replace(/^https?:\/\//,""))+"</b>";}
+  if(h){CUSTOM=true;$("rc").value=h;peek(h);}else{$("rc").value=ROLLED;}
+  setRoomInUrl($("rc").value);
+}catch(e){$("rc").value=ROLLED;}
 shareLine();
+$("tgt").addEventListener("input",syncCode);
 $("reroll").addEventListener("click",function(){
-  $("rc").value=newCode();setRoomInUrl($("rc").value);shareLine();
+  CUSTOM=true;$("rc").value=newCode();setRoomInUrl($("rc").value);shareLine();
+  $("joinNote").className="joinnote on";
+  $("joinNote").innerHTML="Private room. Nobody lands here by typing the url &#8211; <b>send the link</b>.";
 });
 $("rc").addEventListener("input",function(){
-  var v=$("rc").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"");if(v)setRoomInUrl(v);shareLine();
+  var v=roomCode();
+  if(!v){CUSTOM=false;$("joinNote").className="joinnote";syncCode();return;}
+  CUSTOM=true;setRoomInUrl(v);shareLine();
 });
 
 /* ---------- glyphs: kinds told apart by silhouette, not colour ---------- */
@@ -1307,13 +1386,17 @@ function difflines(code){
   }).join("\n");
 }
 function drawBoard(){
-  var fs=LAST.finds||[];
+  var all=LAST.finds||[];
+  var fs=all.filter(function(f){return f.status==="open";});
+  var done=all.filter(function(f){return f.status!=="open";});
+  drawArch(done);
   $("wallN").textContent=fs.length;
-  $("boardEmpty").style.display=fs.length?"none":"block";
+  $("boardEmpty").style.display=all.length?"none":"block";
+  var bc=$("boardClear");
+  if(bc)bc.style.display=(!fs.length&&done.length)?"block":"none";
   var dk=document.querySelector(".deck");
   if(dk)dk.className="deck";
-  var open=fs.filter(function(f){return f.status==="open";}).length;
-  $("wallBreak").textContent=fs.length?(open+" open"):"";
+  $("wallBreak").textContent=fs.length?(fs.length+" open"):"";
   var h=fs.map(function(f){
     var tilt=[-1.2,0,1][f.id%3];
     var hot=(f.sev==="high"&&f.status==="open");
@@ -1346,6 +1429,33 @@ function drawBoard(){
   }).join("");
   if($("board").dataset.k!==h){$("board").innerHTML=h;$("board").dataset.k=h;}
 }
+/* handled findings leave the board but stay readable, so the room can see
+   what it actually fixed and pull anything back if it was closed too early */
+function drawArch(done){
+  var el=$("arch");if(!el)return;
+  if(!done.length){el.innerHTML="";el.dataset.k="";return;}
+  var ship=done.filter(function(f){return f.status==="merged";}).length;
+  var shut=done.length-ship;
+  var h='<div class="archhead"><b>'+done.length+'</b> handled</div>'+
+    '<div class="archwhat">'+ship+' shipped'+(shut?(' &middot; '+shut+' called not-a-bug'):'')+
+    '. Off the board, still on the record.</div><div class="archrow">'+
+    done.map(function(f){
+      var ok=f.status==="merged";
+      return '<div class="ac '+(ok?"ship":"shut")+'" data-f="'+f.id+'">'+
+        '<div class="at">'+glyph(f.kind,14,ok?"#1F6B2E":"#6B6B64")+
+          (ok?"shipped":"not a bug")+' &middot; #'+f.id+'</div>'+
+        '<div class="ax">'+esc(f.text)+'</div>'+
+        '<div class="ab"><span>'+esc(f.by)+'</span><span>+'+(f.plus||[]).length+'</span>'+
+        '<button data-a="open">put it back</button></div></div>';
+    }).join("")+'</div>';
+  if(el.dataset.k!==h){el.innerHTML=h;el.dataset.k=h;}
+}
+$("arch").addEventListener("click",function(e){
+  var b=e.target.closest("[data-a]");if(!b||DEMO)return;
+  var card=b.closest("[data-f]");if(!card)return;
+  b.disabled=true;b.textContent="...";
+  post("mark",{id:ME.id,find:Number(card.dataset.f),status:"open"}).then(pull);
+});
 $("board").addEventListener("click",function(e){
   var b=e.target.closest("[data-a]");if(!b||DEMO)return;
   var card=b.closest("[data-f]"),fid=Number(card.dataset.f),a=b.dataset.a;
